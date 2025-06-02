@@ -1,0 +1,13 @@
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\bin\Debug\DacpacPublisher.exe.config
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\bin\Debug\DacpacPublisher.exe
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\bin\Debug\DacpacPublisher.pdb
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.csproj.AssemblyReference.cache
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.DacpacPublisherForm.resources
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.Properties.Resources.resources
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.csproj.GenerateResource.cache
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.csproj.CoreCompileInputs.cache
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPu.116398FB.Up2Date
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.exe
+C:\Users\Ahmed Genidy\source\repos\DacpacPublisher\DacpacPublisher\obj\Debug\DacpacPublisher.pdb
