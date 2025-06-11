@@ -1,189 +1,189 @@
 ﻿// Complete ProcedureValidator.cs - Add to your Services folder
 
-using DacpacPublisher.Data_Models;
-using DacpacPublisher.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using DacpacPublisher.Data_Models;
+using DacpacPublisher.Interfaces;
 
 namespace DacpacPublisher.Services
 {
-	/// <summary>
-	/// Service for validating stored procedures before deployment
-	/// </summary>
-	public class ProcedureValidator
-	{
-		private readonly IConnectionService _connectionService;
-		private readonly ILogService _logService;
+    /// <summary>
+    /// Service for validating stored procedures before deployment
+    /// </summary>
+    public class ProcedureValidator
+    {
+        private readonly IConnectionService _connectionService;
+        private readonly ILogService _logService;
 
-		public ProcedureValidator(IConnectionService connectionService, ILogService logService)
-		{
-			_connectionService = connectionService;
-			_logService = logService;
-		}
+        public ProcedureValidator(IConnectionService connectionService, ILogService logService)
+        {
+            _connectionService = connectionService;
+            _logService = logService;
+        }
 
-		/// <summary>
-		/// Validate all procedures in the configuration and return filtered lists
-		/// </summary>
-		public async Task<ProcedureValidationResult> ValidateProceduresAsync(PublisherConfiguration config)
-		{
-			var result = new ProcedureValidationResult();
+        /// <summary>
+        /// Validate all procedures in the configuration and return filtered lists
+        /// </summary>
+        public async Task<ProcedureValidationResult> ValidateProceduresAsync(PublisherConfiguration config)
+        {
+            var result = new ProcedureValidationResult();
 
-			try
-			{
-				_logService.LogInfo("🔍 Starting comprehensive procedure validation...");
+            try
+            {
+                _logService.LogInfo("🔍 Starting comprehensive procedure validation...");
 
-				// Validate procedures for primary database
-				if (!string.IsNullOrEmpty(config.Database))
-				{
-					var primaryValidation = await ValidateProceduresForDatabaseAsync(config, config.Database);
-					result.DatabaseResults[config.Database] = primaryValidation;
-				}
+                // Validate procedures for primary database
+                if (!string.IsNullOrEmpty(config.Database))
+                {
+                    var primaryValidation = await ValidateProceduresForDatabaseAsync(config, config.Database);
+                    result.DatabaseResults[config.Database] = primaryValidation;
+                }
 
-				// Validate procedures for secondary databases
-				if (config.EnableMultipleDatabases && config.DeploymentTargets?.Any() == true)
-				{
-					foreach (var target in config.DeploymentTargets.Where(t => t.IsEnabled))
-					{
-						var targetConfig = CreateTargetConfig(config, target);
-						var targetValidation = await ValidateProceduresForDatabaseAsync(targetConfig, target.Database);
-						result.DatabaseResults[target.Database] = targetValidation;
-					}
-				}
+                // Validate procedures for secondary databases
+                if (config.EnableMultipleDatabases && config.DeploymentTargets?.Any() == true)
+                {
+                    foreach (var target in config.DeploymentTargets.Where(t => t.IsEnabled))
+                    {
+                        var targetConfig = CreateTargetConfig(config, target);
+                        var targetValidation = await ValidateProceduresForDatabaseAsync(targetConfig, target.Database);
+                        result.DatabaseResults[target.Database] = targetValidation;
+                    }
+                }
 
-				// Calculate overall statistics
-				result.CalculateOverallStatistics();
+                // Calculate overall statistics
+                result.CalculateOverallStatistics();
 
-				_logService.LogInfo($"✅ Procedure validation completed: {result.GetSummary()}");
-				return result;
-			}
-			catch (Exception ex)
-			{
-				_logService.LogError("Procedure validation failed", ex);
-				result.ValidationError = ex.Message;
-				return result;
-			}
-		}
+                _logService.LogInfo($"✅ Procedure validation completed: {result.GetSummary()}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logService.LogError("Procedure validation failed", ex);
+                result.ValidationError = ex.Message;
+                return result;
+            }
+        }
 
-		/// <summary>
-		/// Validate procedures for a specific database
-		/// </summary>
-		private async Task<DatabaseProcedureValidation> ValidateProceduresForDatabaseAsync(
-			PublisherConfiguration config, string databaseName)
-		{
-			var validation = new DatabaseProcedureValidation { DatabaseName = databaseName };
+        /// <summary>
+        /// Validate procedures for a specific database
+        /// </summary>
+        private async Task<DatabaseProcedureValidation> ValidateProceduresForDatabaseAsync(
+            PublisherConfiguration config, string databaseName)
+        {
+            var validation = new DatabaseProcedureValidation { DatabaseName = databaseName };
 
-			try
-			{
-				var connectionInfo = new ConnectionInfo
-				{
-					ServerName = config.ServerName,
-					WindowsAuth = config.WindowsAuth,
-					Username = config.Username,
-					Password = config.Password,
-					Database = databaseName
-				};
+            try
+            {
+                var connectionInfo = new ConnectionInfo
+                {
+                    ServerName = config.ServerName,
+                    WindowsAuth = config.WindowsAuth,
+                    Username = config.Username,
+                    Password = config.Password,
+                    Database = databaseName
+                };
 
-				// Test connection first
-				bool canConnect = await _connectionService.TestConnectionAsync(connectionInfo);
-				if (!canConnect)
-				{
-					validation.ConnectionError = $"Cannot connect to database '{databaseName}'";
-					return validation;
-				}
+                // Test connection first
+                bool canConnect = await _connectionService.TestConnectionAsync(connectionInfo);
+                if (!canConnect)
+                {
+                    validation.ConnectionError = $"Cannot connect to database '{databaseName}'";
+                    return validation;
+                }
 
-				using (var connection = new SqlConnection(_connectionService.BuildConnectionString(connectionInfo)))
-				{
-					await connection.OpenAsync();
+                using (var connection = new SqlConnection(_connectionService.BuildConnectionString(connectionInfo)))
+                {
+                    await connection.OpenAsync();
 
-					// Get list of procedures to validate
-					var proceduresToValidate = GetProceduresForDatabase(config, databaseName);
+                    // Get list of procedures to validate
+                    var proceduresToValidate = GetProceduresForDatabase(config, databaseName);
 
-					_logService.LogInfo($"🔍 Validating {proceduresToValidate.Count} procedures for {databaseName}...");
+                    _logService.LogInfo($"🔍 Validating {proceduresToValidate.Count} procedures for {databaseName}...");
 
-					// Validate each procedure
-					foreach (var procedure in proceduresToValidate)
-					{
-						var procValidation = await ValidateSingleProcedureAsync(connection, procedure);
-						validation.ProcedureValidations.Add(procValidation);
+                    // Validate each procedure
+                    foreach (var procedure in proceduresToValidate)
+                    {
+                        var procValidation = await ValidateSingleProcedureAsync(connection, procedure);
+                        validation.ProcedureValidations.Add(procValidation);
 
-						// Categorize the procedure
-						if (procValidation.Exists)
-						{
-							validation.ValidProcedures.Add(procedure);
-						}
-						else if (DeploymentConfiguration.IsAutoGeneratedProcedure(procedure.Name))
-						{
-							validation.AutoGeneratedProcedures.Add(procedure);
-						}
-						else
-						{
-							validation.MissingProcedures.Add(procedure);
-						}
-					}
+                        // Categorize the procedure
+                        if (procValidation.Exists)
+                        {
+                            validation.ValidProcedures.Add(procedure);
+                        }
+                        else if (DeploymentConfiguration.IsAutoGeneratedProcedure(procedure.Name))
+                        {
+                            validation.AutoGeneratedProcedures.Add(procedure);
+                        }
+                        else
+                        {
+                            validation.MissingProcedures.Add(procedure);
+                        }
+                    }
 
-					validation.Success = true;
-				}
-			}
-			catch (Exception ex)
-			{
-				validation.ValidationError = ex.Message;
-				_logService.LogError($"Failed to validate procedures for {databaseName}", ex);
-			}
+                    validation.Success = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                validation.ValidationError = ex.Message;
+                _logService.LogError($"Failed to validate procedures for {databaseName}", ex);
+            }
 
-			return validation;
-		}
+            return validation;
+        }
 
-		/// <summary>
-		/// Validate a single stored procedure
-		/// </summary>
-		private async Task<SingleProcedureValidation> ValidateSingleProcedureAsync(
-			SqlConnection connection, StoredProcedureInfo procedure)
-		{
-			var validation = new SingleProcedureValidation
-			{
-				Procedure = procedure,
-				IsAutoGenerated = DeploymentConfiguration.IsAutoGeneratedProcedure(procedure.Name)
-			};
+        /// <summary>
+        /// Validate a single stored procedure
+        /// </summary>
+        private async Task<SingleProcedureValidation> ValidateSingleProcedureAsync(
+            SqlConnection connection, StoredProcedureInfo procedure)
+        {
+            var validation = new SingleProcedureValidation
+            {
+                Procedure = procedure,
+                IsAutoGenerated = DeploymentConfiguration.IsAutoGeneratedProcedure(procedure.Name)
+            };
 
-			try
-			{
-				// Check if procedure exists
-				validation.Exists = await CheckProcedureExistsAsync(connection, procedure.Name);
+            try
+            {
+                // Check if procedure exists
+                validation.Exists = await CheckProcedureExistsAsync(connection, procedure.Name);
 
-				if (validation.Exists)
-				{
-					// Get additional procedure information
-					await GetProcedureDetailsAsync(connection, procedure.Name, validation);
-				}
-				else
-				{
-					validation.SkipReason = DeploymentConfiguration.GetSkipReason(procedure.Name);
-				}
+                if (validation.Exists)
+                {
+                    // Get additional procedure information
+                    await GetProcedureDetailsAsync(connection, procedure.Name, validation);
+                }
+                else
+                {
+                    validation.SkipReason = DeploymentConfiguration.GetSkipReason(procedure.Name);
+                }
 
-				validation.Success = true;
-			}
-			catch (Exception ex)
-			{
-				validation.ValidationError = ex.Message;
-				_logService.LogError($"Failed to validate procedure {procedure.Name}", ex);
-			}
+                validation.Success = true;
+            }
+            catch (Exception ex)
+            {
+                validation.ValidationError = ex.Message;
+                _logService.LogError($"Failed to validate procedure {procedure.Name}", ex);
+            }
 
-			return validation;
-		}
+            return validation;
+        }
 
-		/// <summary>
-		/// Check if a stored procedure exists
-		/// </summary>
-		private async Task<bool> CheckProcedureExistsAsync(SqlConnection connection, string procedureName)
-		{
-			try
-			{
-				string cleanProcName = CleanProcedureName(procedureName);
+        /// <summary>
+        /// Check if a stored procedure exists
+        /// </summary>
+        private async Task<bool> CheckProcedureExistsAsync(SqlConnection connection, string procedureName)
+        {
+            try
+            {
+                string cleanProcName = CleanProcedureName(procedureName);
 
-				const string checkQuery = @"
+                const string checkQuery = @"
                     SELECT COUNT(*)
                     FROM sys.procedures p
                     INNER JOIN sys.schemas s ON p.schema_id = s.schema_id
@@ -191,30 +191,30 @@ namespace DacpacPublisher.Services
                        OR p.name = @ProcedureName
                        OR '[' + s.name + '].[' + p.name + ']' = @ProcedureName";
 
-				using (var command = new SqlCommand(checkQuery, connection))
-				{
-					command.Parameters.AddWithValue("@ProcedureName", cleanProcName);
-					var count = (int)await command.ExecuteScalarAsync();
-					return count > 0;
-				}
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
+                using (var command = new SqlCommand(checkQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@ProcedureName", cleanProcName);
+                    var count = (int)await command.ExecuteScalarAsync();
+                    return count > 0;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
 
-		/// <summary>
-		/// Get detailed information about a procedure
-		/// </summary>
-		private async Task GetProcedureDetailsAsync(SqlConnection connection, string procedureName,
-			SingleProcedureValidation validation)
-		{
-			try
-			{
-				string cleanProcName = CleanProcedureName(procedureName);
+        /// <summary>
+        /// Get detailed information about a procedure
+        /// </summary>
+        private async Task GetProcedureDetailsAsync(SqlConnection connection, string procedureName,
+            SingleProcedureValidation validation)
+        {
+            try
+            {
+                string cleanProcName = CleanProcedureName(procedureName);
 
-				const string detailQuery = @"
+                const string detailQuery = @"
                     SELECT 
                         s.name as SchemaName,
                         p.name as ProcedureName,
@@ -227,227 +227,227 @@ namespace DacpacPublisher.Services
                        OR p.name = @ProcedureName
                        OR '[' + s.name + '].[' + p.name + ']' = @ProcedureName";
 
-				using (var command = new SqlCommand(detailQuery, connection))
-				{
-					command.Parameters.AddWithValue("@ProcedureName", cleanProcName);
-					using (var reader = await command.ExecuteReaderAsync())
-					{
-						if (await reader.ReadAsync())
-						{
-							validation.SchemaName = reader["SchemaName"].ToString();
-							validation.FullName = $"{validation.SchemaName}.{reader["ProcedureName"]}";
-							validation.CreateDate = reader["create_date"] as DateTime?;
-							validation.ModifyDate = reader["modify_date"] as DateTime?;
-							validation.TypeDescription = reader["type_desc"].ToString();
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				_logService.LogWarning($"Could not get details for procedure {procedureName}: {ex.Message}");
-			}
-		}
+                using (var command = new SqlCommand(detailQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@ProcedureName", cleanProcName);
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            validation.SchemaName = reader["SchemaName"].ToString();
+                            validation.FullName = $"{validation.SchemaName}.{reader["ProcedureName"]}";
+                            validation.CreateDate = reader["create_date"] as DateTime?;
+                            validation.ModifyDate = reader["modify_date"] as DateTime?;
+                            validation.TypeDescription = reader["type_desc"].ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logService.LogWarning($"Could not get details for procedure {procedureName}: {ex.Message}");
+            }
+        }
 
-		/// <summary>
-		/// Get procedures to validate for a specific database
-		/// </summary>
-		private List<StoredProcedureInfo> GetProceduresForDatabase(PublisherConfiguration config, string databaseName)
-		{
-			var procedures = new List<StoredProcedureInfo>();
+        /// <summary>
+        /// Get procedures to validate for a specific database
+        /// </summary>
+        private List<StoredProcedureInfo> GetProceduresForDatabase(PublisherConfiguration config, string databaseName)
+        {
+            var procedures = new List<StoredProcedureInfo>();
 
-			// Add smart procedures if available
-			if (config.SmartProcedures?.Any() == true)
-			{
-				var smartProcs = config.SmartProcedures.Where(sp =>
-					ShouldProcedureRunOnDatabase(sp, databaseName, config));
+            // Add smart procedures if available
+            if (config.SmartProcedures?.Any() == true)
+            {
+                var smartProcs = config.SmartProcedures.Where(sp =>
+                    ShouldProcedureRunOnDatabase(sp, databaseName, config));
 
-				procedures.AddRange(smartProcs.Select(sp => sp.ToLegacyProcedure()));
-			}
+                procedures.AddRange(smartProcs.Select(sp => sp.ToLegacyProcedure()));
+            }
 
-			// Add regular stored procedures if no smart procedures
-			if (!procedures.Any() && config.StoredProcedures?.Any() == true)
-			{
-				procedures.AddRange(config.StoredProcedures);
-			}
+            // Add regular stored procedures if no smart procedures
+            if (!procedures.Any() && config.StoredProcedures?.Any() == true)
+            {
+                procedures.AddRange(config.StoredProcedures);
+            }
 
-			return procedures.OrderBy(p => p.ExecutionOrder).ToList();
-		}
+            return procedures.OrderBy(p => p.ExecutionOrder).ToList();
+        }
 
-		/// <summary>
-		/// Determine if a smart procedure should run on the specified database
-		/// </summary>
-		private bool ShouldProcedureRunOnDatabase(SmartStoredProcedureInfo smartProc, string databaseName, PublisherConfiguration config)
-		{
-			// Primary database
-			if (databaseName.Equals(config.Database, StringComparison.OrdinalIgnoreCase))
-				return smartProc.ExecuteOnDatabase1;
+        /// <summary>
+        /// Determine if a smart procedure should run on the specified database
+        /// </summary>
+        private bool ShouldProcedureRunOnDatabase(SmartStoredProcedureInfo smartProc, string databaseName, PublisherConfiguration config)
+        {
+            // Primary database
+            if (databaseName.Equals(config.Database, StringComparison.OrdinalIgnoreCase))
+                return smartProc.ExecuteOnDatabase1;
 
-			// Secondary database
-			if (config.EnableMultipleDatabases && config.DeploymentTargets?.Any() == true)
-			{
-				var target = config.DeploymentTargets.FirstOrDefault(t =>
-					t.Database.Equals(databaseName, StringComparison.OrdinalIgnoreCase));
+            // Secondary database
+            if (config.EnableMultipleDatabases && config.DeploymentTargets?.Any() == true)
+            {
+                var target = config.DeploymentTargets.FirstOrDefault(t =>
+                    t.Database.Equals(databaseName, StringComparison.OrdinalIgnoreCase));
 
-				if (target != null)
-					return smartProc.ExecuteOnDatabase2;
-			}
+                if (target != null)
+                    return smartProc.ExecuteOnDatabase2;
+            }
 
-			return false;
-		}
+            return false;
+        }
 
-		/// <summary>
-		/// Create target configuration for validation
-		/// </summary>
-		private PublisherConfiguration CreateTargetConfig(PublisherConfiguration baseConfig, DatabaseDeploymentTarget target)
-		{
-			return new PublisherConfiguration
-			{
-				ServerName = target.ServerName ?? baseConfig.ServerName,
-				WindowsAuth = baseConfig.WindowsAuth,
-				Username = baseConfig.Username,
-				Password = baseConfig.Password,
-				Database = target.Database,
-				StoredProcedures = target.GetExecutableProcedures(),
-				SmartProcedures = target.SmartProcedures
-			};
-		}
+        /// <summary>
+        /// Create target configuration for validation
+        /// </summary>
+        private PublisherConfiguration CreateTargetConfig(PublisherConfiguration baseConfig, DatabaseDeploymentTarget target)
+        {
+            return new PublisherConfiguration
+            {
+                ServerName = target.ServerName ?? baseConfig.ServerName,
+                WindowsAuth = baseConfig.WindowsAuth,
+                Username = baseConfig.Username,
+                Password = baseConfig.Password,
+                Database = target.Database,
+                StoredProcedures = target.GetExecutableProcedures(),
+                SmartProcedures = target.SmartProcedures
+            };
+        }
 
-		/// <summary>
-		/// Clean procedure name for proper comparison
-		/// </summary>
-		private string CleanProcedureName(string procedureName)
-		{
-			if (string.IsNullOrEmpty(procedureName))
-				return procedureName;
+        /// <summary>
+        /// Clean procedure name for proper comparison
+        /// </summary>
+        private string CleanProcedureName(string procedureName)
+        {
+            if (string.IsNullOrEmpty(procedureName))
+                return procedureName;
 
-			// Remove brackets and trim
-			string cleaned = procedureName.Trim().Replace("[", "").Replace("]", "");
+            // Remove brackets and trim
+            string cleaned = procedureName.Trim().Replace("[", "").Replace("]", "");
 
-			// If no schema specified, assume dbo
-			if (!cleaned.Contains("."))
-				cleaned = "dbo." + cleaned;
+            // If no schema specified, assume dbo
+            if (!cleaned.Contains("."))
+                cleaned = "dbo." + cleaned;
 
-			return cleaned;
-		}
-	}
+            return cleaned;
+        }
+    }
 
-	/// <summary>
-	/// Overall procedure validation result
-	/// </summary>
-	public class ProcedureValidationResult
-	{
-		public Dictionary<string, DatabaseProcedureValidation> DatabaseResults { get; set; }
-		public string ValidationError { get; set; }
-		public int TotalProcedures { get; set; }
-		public int ValidProcedures { get; set; }
-		public int AutoGeneratedProcedures { get; set; }
-		public int MissingProcedures { get; set; }
-		public bool HasErrors { get; set; }
+    /// <summary>
+    /// Overall procedure validation result
+    /// </summary>
+    public class ProcedureValidationResult
+    {
+        public Dictionary<string, DatabaseProcedureValidation> DatabaseResults { get; set; }
+        public string ValidationError { get; set; }
+        public int TotalProcedures { get; set; }
+        public int ValidProcedures { get; set; }
+        public int AutoGeneratedProcedures { get; set; }
+        public int MissingProcedures { get; set; }
+        public bool HasErrors { get; set; }
 
-		public ProcedureValidationResult()
-		{
-			DatabaseResults = new Dictionary<string, DatabaseProcedureValidation>();
-		}
+        public ProcedureValidationResult()
+        {
+            DatabaseResults = new Dictionary<string, DatabaseProcedureValidation>();
+        }
 
-		public void CalculateOverallStatistics()
-		{
-			TotalProcedures = DatabaseResults.Values.Sum(d => d.ProcedureValidations.Count);
-			ValidProcedures = DatabaseResults.Values.Sum(d => d.ValidProcedures.Count);
-			AutoGeneratedProcedures = DatabaseResults.Values.Sum(d => d.AutoGeneratedProcedures.Count);
-			MissingProcedures = DatabaseResults.Values.Sum(d => d.MissingProcedures.Count);
-			HasErrors = DatabaseResults.Values.Any(d => !d.Success || !string.IsNullOrEmpty(d.ConnectionError));
-		}
+        public void CalculateOverallStatistics()
+        {
+            TotalProcedures = DatabaseResults.Values.Sum(d => d.ProcedureValidations.Count);
+            ValidProcedures = DatabaseResults.Values.Sum(d => d.ValidProcedures.Count);
+            AutoGeneratedProcedures = DatabaseResults.Values.Sum(d => d.AutoGeneratedProcedures.Count);
+            MissingProcedures = DatabaseResults.Values.Sum(d => d.MissingProcedures.Count);
+            HasErrors = DatabaseResults.Values.Any(d => !d.Success || !string.IsNullOrEmpty(d.ConnectionError));
+        }
 
-		public string GetSummary()
-		{
-			return $"Total: {TotalProcedures}, Valid: {ValidProcedures}, Auto-Generated: {AutoGeneratedProcedures}, Missing: {MissingProcedures}";
-		}
+        public string GetSummary()
+        {
+            return $"Total: {TotalProcedures}, Valid: {ValidProcedures}, Auto-Generated: {AutoGeneratedProcedures}, Missing: {MissingProcedures}";
+        }
 
-		public List<string> GetValidationWarnings()
-		{
-			var warnings = new List<string>();
+        public List<string> GetValidationWarnings()
+        {
+            var warnings = new List<string>();
 
-			foreach (var dbResult in DatabaseResults.Values)
-			{
-				if (!string.IsNullOrEmpty(dbResult.ConnectionError))
-				{
-					warnings.Add($"Connection error for {dbResult.DatabaseName}: {dbResult.ConnectionError}");
-				}
+            foreach (var dbResult in DatabaseResults.Values)
+            {
+                if (!string.IsNullOrEmpty(dbResult.ConnectionError))
+                {
+                    warnings.Add($"Connection error for {dbResult.DatabaseName}: {dbResult.ConnectionError}");
+                }
 
-				if (dbResult.MissingProcedures.Any())
-				{
-					var nonAutoGenerated = dbResult.MissingProcedures.Where(p =>
-						!DeploymentConfiguration.IsAutoGeneratedProcedure(p.Name)).ToList();
+                if (dbResult.MissingProcedures.Any())
+                {
+                    var nonAutoGenerated = dbResult.MissingProcedures.Where(p =>
+                        !DeploymentConfiguration.IsAutoGeneratedProcedure(p.Name)).ToList();
 
-					if (nonAutoGenerated.Any())
-					{
-						warnings.Add($"Missing procedures in {dbResult.DatabaseName}: {string.Join(", ", nonAutoGenerated.Select(p => p.Name))}");
-					}
-				}
-			}
+                    if (nonAutoGenerated.Any())
+                    {
+                        warnings.Add($"Missing procedures in {dbResult.DatabaseName}: {string.Join(", ", nonAutoGenerated.Select(p => p.Name))}");
+                    }
+                }
+            }
 
-			return warnings;
-		}
-	}
+            return warnings;
+        }
+    }
 
-	/// <summary>
-	/// Validation result for a specific database
-	/// </summary>
-	public class DatabaseProcedureValidation
-	{
-		public string DatabaseName { get; set; }
-		public bool Success { get; set; }
-		public string ConnectionError { get; set; }
-		public string ValidationError { get; set; }
-		public List<SingleProcedureValidation> ProcedureValidations { get; set; }
-		public List<StoredProcedureInfo> ValidProcedures { get; set; }
-		public List<StoredProcedureInfo> AutoGeneratedProcedures { get; set; }
-		public List<StoredProcedureInfo> MissingProcedures { get; set; }
+    /// <summary>
+    /// Validation result for a specific database
+    /// </summary>
+    public class DatabaseProcedureValidation
+    {
+        public string DatabaseName { get; set; }
+        public bool Success { get; set; }
+        public string ConnectionError { get; set; }
+        public string ValidationError { get; set; }
+        public List<SingleProcedureValidation> ProcedureValidations { get; set; }
+        public List<StoredProcedureInfo> ValidProcedures { get; set; }
+        public List<StoredProcedureInfo> AutoGeneratedProcedures { get; set; }
+        public List<StoredProcedureInfo> MissingProcedures { get; set; }
 
-		public DatabaseProcedureValidation()
-		{
-			ProcedureValidations = new List<SingleProcedureValidation>();
-			ValidProcedures = new List<StoredProcedureInfo>();
-			AutoGeneratedProcedures = new List<StoredProcedureInfo>();
-			MissingProcedures = new List<StoredProcedureInfo>();
-		}
+        public DatabaseProcedureValidation()
+        {
+            ProcedureValidations = new List<SingleProcedureValidation>();
+            ValidProcedures = new List<StoredProcedureInfo>();
+            AutoGeneratedProcedures = new List<StoredProcedureInfo>();
+            MissingProcedures = new List<StoredProcedureInfo>();
+        }
 
-		public string GetSummary()
-		{
-			return $"{DatabaseName}: Valid: {ValidProcedures.Count}, Auto-Gen: {AutoGeneratedProcedures.Count}, Missing: {MissingProcedures.Count}";
-		}
-	}
+        public string GetSummary()
+        {
+            return $"{DatabaseName}: Valid: {ValidProcedures.Count}, Auto-Gen: {AutoGeneratedProcedures.Count}, Missing: {MissingProcedures.Count}";
+        }
+    }
 
-	/// <summary>
-	/// Validation result for a single procedure
-	/// </summary>
-	public class SingleProcedureValidation
-	{
-		public StoredProcedureInfo Procedure { get; set; }
-		public bool Success { get; set; }
-		public bool Exists { get; set; }
-		public bool IsAutoGenerated { get; set; }
-		public string ValidationError { get; set; }
-		public string SkipReason { get; set; }
-		public string SchemaName { get; set; }
-		public string FullName { get; set; }
-		public DateTime? CreateDate { get; set; }
-		public DateTime? ModifyDate { get; set; }
-		public string TypeDescription { get; set; }
+    /// <summary>
+    /// Validation result for a single procedure
+    /// </summary>
+    public class SingleProcedureValidation
+    {
+        public StoredProcedureInfo Procedure { get; set; }
+        public bool Success { get; set; }
+        public bool Exists { get; set; }
+        public bool IsAutoGenerated { get; set; }
+        public string ValidationError { get; set; }
+        public string SkipReason { get; set; }
+        public string SchemaName { get; set; }
+        public string FullName { get; set; }
+        public DateTime? CreateDate { get; set; }
+        public DateTime? ModifyDate { get; set; }
+        public string TypeDescription { get; set; }
 
-		public string GetStatusDescription()
-		{
-			if (!Success)
-				return $"❌ Validation failed: {ValidationError}";
+        public string GetStatusDescription()
+        {
+            if (!Success)
+                return $"❌ Validation failed: {ValidationError}";
 
-			if (Exists)
-				return $"✅ Exists ({FullName})";
+            if (Exists)
+                return $"✅ Exists ({FullName})";
 
-			if (IsAutoGenerated)
-				return $"⏭️ Auto-generated (will skip): {SkipReason}";
+            if (IsAutoGenerated)
+                return $"⏭️ Auto-generated (will skip): {SkipReason}";
 
-			return $"❌ Missing: {Procedure.Name}";
-		}
-	}
+            return $"❌ Missing: {Procedure.Name}";
+        }
+    }
 }

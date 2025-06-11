@@ -13,13 +13,16 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
+using System.ComponentModel;
 
 namespace DacpacPublisher
 {
 	public partial class DacpacPublisherForm : Form
 	{
-
-
+		private bool IsInDesignMode
+		{
+			get { return DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime; }
+		}
 		// Services
 		private readonly ILogService _logService;
 		private readonly IConnectionService _connectionService;
@@ -34,75 +37,49 @@ namespace DacpacPublisher
 		// Job script validation timer
 		private System.Windows.Forms.Timer _jobScriptValidationTimer;
 
-		private ListBox lstSynonymTargetDatabases;
-		private Button btnRefreshSynonymTargets;
-
-		private CheckBox chkShowSynonymTargets;
-		private CheckedListBox clbSynonymTargets;
-		private Label lblSynonymTargets;
-		private Button btnAutoDetectTargets;
-		private Label lblSynonymSourceInfo;
 		// Private fields for multiple database support
 		private string _secondDacpacPath = string.Empty;
 		private string _secondDatabase = string.Empty;
+		private bool _isInitializing = true;
+		private bool _isValidating = false;
 
 		public DacpacPublisherForm()
 		{
+			// CRITICAL: InitializeComponent MUST be called first
 			InitializeComponent();
-			InitializeCustomHeader();
+
+			// Skip ALL initialization if in design mode
+			if (IsInDesignMode) return;
 
 			try
 			{
-				// Initialize core services
+				// Initialize services ONLY at runtime
 				_logService = new LogService();
 				_connectionService = new ConnectionService(_logService);
 				_deploymentService = new DeploymentService(_connectionService, _logService);
 				_configurationService = new ConfigurationService(_logService);
 				_backupService = new BackupService(_logService);
 
-				// Initialize data analysis service SAFELY
-				try
-				{
-					_dataAnalysisService = new DataAnalysisService(_connectionService, _logService);
-					_logService.LogInfo("✅ Data analysis service initialized");
-				}
-				catch (Exception ex)
-				{
-					_logService.LogWarning($"⚠️ Data analysis service initialization failed: {ex.Message}");
-					_dataAnalysisService = null; // Set to null so we know it's not available
-				}
-
-				// Initialize configuration with null safety
+				// Initialize configuration
 				_currentConfig = new PublisherConfiguration();
-				_currentConfig.SmartProcedures = new List<SmartStoredProcedureInfo>();
-				_currentConfig.StoredProcedures = new List<StoredProcedureInfo>();
-				_currentConfig.DeploymentTargets = new List<DatabaseDeploymentTarget>();
-				_currentConfig.History = new List<DeploymentHistory>(); // ADD THIS
 
 				// Subscribe to events
 				_logService.MessageLogged += OnLogMessageReceived;
 				_deploymentService.ProgressChanged += OnProgressChanged;
 
-				InitializeFileDialogs();
+				// Initialize tooltips
 				InitializeTooltips();
-				InitializeDataViewerTab(); // ADD THIS LINE
-				_logService.LogInfo("✅ DACPAC Publisher started successfully");
+
+		
 			}
 			catch (Exception ex)
 			{
-				// Fallback error handling
-				MessageBox.Show($"❌ Error initializing application: {ex.Message}", "Initialization Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show($"Error initializing application: {ex.Message}",
+					"Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
-		private void InitializeFileDialogs()
-		{
-			// File dialogs are already configured in the designer
-			toolTip.SetToolTip(txtJobScriptsFolder, "Folder containing SQL Agent job scripts (.sql files)");
-			toolTip.SetToolTip(btnConfigureSmartProcedures, "Configure procedures for smart deployment across multiple databases");
-			toolTip.SetToolTip(chkCreateBackup, "Create a backup before deployment for safety");
-		}
+
 
 		private void InitializeTooltips()
 		{
@@ -113,25 +90,248 @@ namespace DacpacPublisher
 			toolTip.SetToolTip(btnTestConnection, "Test the database connection with current settings");
 			toolTip.SetToolTip(btnRefreshDatabases, "Refresh the list of available databases");
 			toolTip.SetToolTip(btnPublish, "Start the deployment process");
+			toolTip.SetToolTip(txtJobScriptsFolder, "Folder containing SQL Agent job scripts (.sql files)");
+			toolTip.SetToolTip(btnConfigureSmartProcedures, "Configure procedures for smart deployment across multiple databases");
+			toolTip.SetToolTip(chkCreateBackup, "Create a backup before deployment for safety");
 		}
-
-		private void InitializeSynonymControls()
+		// OPTIONAL: Data Viewer Tab Initialization (comment out if not needed)
+		private void InitializeDataViewerTab1()
 		{
 			try
 			{
+				// Create the data viewer tab
+				this.tabDataViewer = new TabPage();
+				this.dgvTableData = new DataGridView();
+				this.cboTables = new ComboBox();
+				this.btnRefreshTables = new Button();
+				this.btnQueryTable = new Button();
+				this.txtCustomQuery = new TextBox();
+				this.pnlRecommendations = new Panel();
+				this.rtbRecommendations = new RichTextBox();
+				this.lblTableCount = new Label();
+				this.lblRowCount = new Label();
+				this.progressQuery = new ProgressBar();
+
+				//ConfigureDataViewerLayout();
+				//SetupDataViewerEvents();
+
+				// Add tab to main tab control
+				this.tabControl.Controls.Add(this.tabDataViewer);
+
+				_logService?.LogInfo("✅ Data Viewer tab initialized successfully");
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Failed to initialize Data Viewer tab", ex);
+			}
+		}
+
+		private void ConfigureDataViewerLayout1()
+		{
+			// Configure tabDataViewer
+			this.tabDataViewer.Location = new Point(4, 39);
+			this.tabDataViewer.Name = "tabDataViewer";
+			this.tabDataViewer.Size = new Size(1021, 717);
+			this.tabDataViewer.TabIndex = 2;
+			this.tabDataViewer.Text = "📊 Data Viewer";
+			this.tabDataViewer.BackColor = Color.FromArgb(250, 250, 250);
+			this.tabDataViewer.UseVisualStyleBackColor = true;
+
+			// Table Selection Header
+			var lblSelectTable = new Label
+			{
+				Text = "Select Table:",
+				Location = new Point(20, 15),
+				Size = new Size(100, 20),
+				Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+				ForeColor = Helper.UIHelper.PrimaryBlue
+			};
+
+			// Table ComboBox
+			this.cboTables.Location = new Point(130, 12);
+			this.cboTables.Size = new Size(300, 25);
+			this.cboTables.DropDownStyle = ComboBoxStyle.DropDownList;
+			this.cboTables.Font = new Font("Segoe UI", 9F);
+
+			// Refresh Tables Button
+			this.btnRefreshTables.Text = "🔄 Refresh Tables";
+			this.btnRefreshTables.Location = new Point(440, 10);
+			this.btnRefreshTables.Size = new Size(130, 30);
+			this.btnRefreshTables.BackColor = Helper.UIHelper.SuccessGreen;
+			this.btnRefreshTables.ForeColor = Color.White;
+			this.btnRefreshTables.FlatStyle = FlatStyle.Flat;
+			this.btnRefreshTables.FlatAppearance.BorderSize = 0;
+			this.btnRefreshTables.Font = new Font("Segoe UI", 9F);
+
+			// Query Table Button
+			this.btnQueryTable.Text = "📋 Query Table";
+			this.btnQueryTable.Location = new Point(580, 10);
+			this.btnQueryTable.Size = new Size(120, 30);
+			this.btnQueryTable.BackColor = Helper.UIHelper.PrimaryBlue;
+			this.btnQueryTable.ForeColor = Color.White;
+			this.btnQueryTable.FlatStyle = FlatStyle.Flat;
+			this.btnQueryTable.FlatAppearance.BorderSize = 0;
+			this.btnQueryTable.Font = new Font("Segoe UI", 9F);
+
+			// Custom Query Header
+			var lblCustomQuery = new Label
+			{
+				Text = "Custom Query:",
+				Location = new Point(20, 55),
+				Size = new Size(100, 20),
+				Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+				ForeColor = Helper.UIHelper.PrimaryBlue
+			};
+
+			// Custom Query TextBox
+			this.txtCustomQuery.Location = new Point(130, 52);
+			this.txtCustomQuery.Size = new Size(450, 25);
+			this.txtCustomQuery.Text = "SELECT * FROM [Select a table first]";
+			this.txtCustomQuery.ForeColor = Color.Gray;
+			this.txtCustomQuery.Font = new Font("Segoe UI", 9F);
+			this.txtCustomQuery.ReadOnly = true;
+
+			// Execute Query Button
+			var btnExecuteQuery = new Button
+			{
+				Text = "▶️ Execute",
+				Location = new Point(590, 50),
+				Size = new Size(100, 30),
+				BackColor = Helper.UIHelper.WarningOrange,
+				ForeColor = Color.White,
+				FlatStyle = FlatStyle.Flat,
+				Font = new Font("Segoe UI", 9F)
+			};
+			btnExecuteQuery.FlatAppearance.BorderSize = 0;
+
+			// Data Grid
+			this.dgvTableData.Location = new Point(20, 95);
+			this.dgvTableData.Size = new Size(670, 350);
+			Helper.UIHelper.ApplyModernDataGridStyle(this.dgvTableData);
+
+			// Recommendations Panel
+			this.pnlRecommendations.Location = new Point(700, 95);
+			this.pnlRecommendations.Size = new Size(300, 350);
+			this.pnlRecommendations.BorderStyle = BorderStyle.FixedSingle;
+			this.pnlRecommendations.BackColor = Color.FromArgb(255, 248, 225);
+			this.pnlRecommendations.Visible = true;
+
+			var lblRecommendations = new Label
+			{
+				Text = "🎯 Smart Recommendations",
+				Location = new Point(10, 10),
+				Size = new Size(280, 25),
+				Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+				ForeColor = Helper.UIHelper.PrimaryDark
+			};
+
+			// Recommendations RichTextBox
+			this.rtbRecommendations.Location = new Point(10, 40);
+			this.rtbRecommendations.Size = new Size(275, 295);
+			this.rtbRecommendations.ReadOnly = true;
+			this.rtbRecommendations.Font = new Font("Segoe UI", 9F);
+			this.rtbRecommendations.BackColor = Color.White;
+			this.rtbRecommendations.BorderStyle = BorderStyle.None;
+			this.rtbRecommendations.Text = "💡 Select a table to view data and get smart recommendations.\n\n" +
+										   "Features:\n" +
+										   "• Automatic data analysis\n" +
+										   "• Performance suggestions\n" +
+										   "• Data quality insights\n" +
+										   "• Schema recommendations";
+
+			// Status Labels
+			this.lblTableCount.Location = new Point(20, 460);
+			this.lblTableCount.Size = new Size(200, 20);
+			this.lblTableCount.Text = "Tables: 0";
+			this.lblTableCount.Font = new Font("Segoe UI", 9F);
+			this.lblTableCount.ForeColor = Helper.UIHelper.SecondaryText;
+
+			this.lblRowCount.Location = new Point(250, 460);
+			this.lblRowCount.Size = new Size(200, 20);
+			this.lblRowCount.Text = "Rows: 0";
+			this.lblRowCount.Font = new Font("Segoe UI", 9F);
+			this.lblRowCount.ForeColor = Helper.UIHelper.SecondaryText;
+
+			// Progress Bar
+			this.progressQuery.Location = new Point(500, 460);
+			this.progressQuery.Size = new Size(200, 20);
+			this.progressQuery.Visible = false;
+			this.progressQuery.Style = ProgressBarStyle.Marquee;
+
+			// Add controls to recommendations panel
+			this.pnlRecommendations.Controls.AddRange(new Control[] {
+		lblRecommendations, this.rtbRecommendations
+	});
+
+			// Add all controls to tab
+			this.tabDataViewer.Controls.AddRange(new Control[] {
+		lblSelectTable, this.cboTables, this.btnRefreshTables, this.btnQueryTable,
+		lblCustomQuery, this.txtCustomQuery, btnExecuteQuery,
+		this.dgvTableData, this.pnlRecommendations,
+		this.lblTableCount, this.lblRowCount, this.progressQuery
+	});
+
+			// Store reference to execute button for event handling
+			btnExecuteQuery.Name = "btnExecuteQuery";
+			btnExecuteQuery.Click += BtnExecuteQuery_Click;
+		}
+
+		private void SetupDataViewerEvents1()
+		{
+			// Wire up events
+			this.btnRefreshTables.Click += BtnRefreshTables_Click;
+			this.btnQueryTable.Click += BtnQueryTable_Click;
+			this.cboTables.SelectedIndexChanged += CboTables_SelectedIndexChanged;
+
+			// Custom query textbox events
+			this.txtCustomQuery.Enter += (s, e) =>
+			{
+				if (txtCustomQuery.Text.Contains("Select a table first"))
+				{
+					txtCustomQuery.ReadOnly = false;
+					txtCustomQuery.Text = "";
+					txtCustomQuery.ForeColor = Helper.UIHelper.PrimaryBlue;
+				}
+			};
+
+			this.txtCustomQuery.Leave += (s, e) =>
+			{
+				if (string.IsNullOrWhiteSpace(txtCustomQuery.Text))
+				{
+					txtCustomQuery.ReadOnly = true;
+					txtCustomQuery.Text = "SELECT * FROM [Select a table first]";
+					txtCustomQuery.ForeColor = Color.Gray;
+				}
+			};
+		}
+
+		private void InitializeSynonymControls1()
+		{
+			try
+			{
+				// Check if controls already exist
+				if (FindControlByName("lblSynonymSourceInfo") != null)
+				{
+					return; // Already initialized
+				}
+
 				// Find the synonyms group box
 				var synonymGroup = this.Controls.Find("grpSynonyms", true).FirstOrDefault() as GroupBox;
-				if (synonymGroup == null) return;
+				if (synonymGroup == null)
+				{
+					_logService?.LogWarning("Synonyms group box not found - synonym controls cannot be initialized");
+					return;
+				}
 
 				// Increase the height of the synonyms group box
-				synonymGroup.Height = 280; // Increased from default
+				synonymGroup.Height = Math.Max(synonymGroup.Height, 280);
 
-				// Find existing controls
+				// Find existing controls safely
 				var chkCreateSynonyms = synonymGroup.Controls.Find("chkCreateSynonyms", true).FirstOrDefault() as CheckBox;
 				var txtSynonymSourceDb = synonymGroup.Controls.Find("txtSynonymSourceDb", true).FirstOrDefault() as TextBox;
 				var lblSynonymSourceDb = synonymGroup.Controls.Find("lblSynonymSourceDb", true).FirstOrDefault() as Label;
 
-				// Reposition existing controls
+				// Position controls starting from a safe position
 				int yPosition = 25;
 
 				if (chkCreateSynonyms != null)
@@ -145,145 +345,142 @@ namespace DacpacPublisher
 				if (txtSynonymSourceDb != null) txtSynonymSourceDb.Visible = false;
 
 				// Create info label about automatic detection
-				lblSynonymSourceInfo = new Label
+				if (FindControlByName("lblSynonymSourceInfo") == null)
 				{
-					Name = "lblSynonymSourceInfo",
-					Text = "🤖 Source database will be auto-detected (HiveCFMSurvey pattern)",
-					AutoSize = true,
-					Location = new Point(15, yPosition),
-					Size = new Size(400, 20),
-					ForeColor = Color.DarkGreen,
-					Font = new Font(this.Font.FontFamily, 8, FontStyle.Italic)
-				};
-				synonymGroup.Controls.Add(lblSynonymSourceInfo);
+					lblSynonymSourceInfo = new Label
+					{
+						Name = "lblSynonymSourceInfo",
+						Text = "🤖 Source database will be auto-detected (HiveCFMSurvey pattern)",
+						AutoSize = true,
+						Location = new Point(15, yPosition),
+						Size = new Size(400, 20),
+						ForeColor = Color.DarkGreen,
+						Font = new Font(this.Font.FontFamily, 8, FontStyle.Italic),
+						Visible = false
+					};
+					synonymGroup.Controls.Add(lblSynonymSourceInfo);
+				}
 				yPosition += 25;
 
 				// Create show targets checkbox
-				chkShowSynonymTargets = new CheckBox
+				if (FindControlByName("chkShowSynonymTargets") == null)
 				{
-					Name = "chkShowSynonymTargets",
-					Text = "📋 Configure target databases (auto-selects HiveCFMApp databases)",
-					AutoSize = true,
-					Location = new Point(15, yPosition),
-					Size = new Size(400, 20),
-					Checked = false
-				};
-				synonymGroup.Controls.Add(chkShowSynonymTargets);
+					chkShowSynonymTargets = new CheckBox
+					{
+						Name = "chkShowSynonymTargets",
+						Text = "📋 Configure target databases (auto-selects HiveCFMApp databases)",
+						AutoSize = true,
+						Location = new Point(15, yPosition),
+						Size = new Size(400, 20),
+						Checked = false,
+						Visible = false
+					};
+					synonymGroup.Controls.Add(chkShowSynonymTargets);
+
+					// Add event handler safely
+					chkShowSynonymTargets.CheckedChanged += ChkShowSynonymTargets_CheckedChanged;
+				}
 				yPosition += 30;
 
 				// Create target selection label
-				lblSynonymTargets = new Label
+				if (FindControlByName("lblSynonymTargets") == null)
 				{
-					Name = "lblSynonymTargets",
-					Text = "🎯 Select target databases (where synonyms will be created):",
-					AutoSize = true,
-					Location = new Point(15, yPosition),
-					Size = new Size(400, 20),
-					ForeColor = Color.DarkBlue,
-					Font = new Font(this.Font.FontFamily, 9, FontStyle.Bold),
-					Visible = false
-				};
-				synonymGroup.Controls.Add(lblSynonymTargets);
+					lblSynonymTargets = new Label
+					{
+						Name = "lblSynonymTargets",
+						Text = "🎯 Select target databases (where synonyms will be created):",
+						AutoSize = true,
+						Location = new Point(15, yPosition),
+						Size = new Size(400, 20),
+						ForeColor = Color.DarkBlue,
+						Font = new Font(this.Font.FontFamily, 9, FontStyle.Bold),
+						Visible = false
+					};
+					synonymGroup.Controls.Add(lblSynonymTargets);
+				}
 				yPosition += 25;
 
 				// Create target databases checklist
-				clbSynonymTargets = new CheckedListBox
+				if (FindControlByName("clbSynonymTargets") == null)
 				{
-					Name = "clbSynonymTargets",
-					Location = new Point(15, yPosition),
-					Size = new Size(400, 120),
-					CheckOnClick = true,
-					BackColor = Color.White,
-					BorderStyle = BorderStyle.FixedSingle,
-					Visible = false,
-					ScrollAlwaysVisible = true,
-					IntegralHeight = false
-				};
-				synonymGroup.Controls.Add(clbSynonymTargets);
-
-				// Create auto-detect button (positioned to the right of the checklist)
-				btnAutoDetectTargets = new Button
-				{
-					Name = "btnAutoDetectTargets",
-					Text = "🔄 Auto Detect",
-					Location = new Point(425, yPosition),
-					Size = new Size(100, 30),
-					BackColor = Color.LightBlue,
-					FlatStyle = FlatStyle.Flat,
-					Visible = false,
-					Font = new Font(this.Font.FontFamily, 8, FontStyle.Regular)
-				};
-				synonymGroup.Controls.Add(btnAutoDetectTargets);
-
-				// Add event handlers
-				chkShowSynonymTargets.CheckedChanged += ChkShowSynonymTargets_CheckedChanged;
-				btnAutoDetectTargets.Click += BtnAutoDetectTargets_Click;
-
-				// Wire up the create synonyms checkbox to show/hide everything
-				if (chkCreateSynonyms != null)
-				{
-					chkCreateSynonyms.CheckedChanged += (s, e) => {
-						bool isChecked = chkCreateSynonyms.Checked;
-						lblSynonymSourceInfo.Visible = isChecked;
-						chkShowSynonymTargets.Visible = isChecked;
-
-						// Hide the target selection if unchecked
-						if (!isChecked)
-						{
-							chkShowSynonymTargets.Checked = false;
-						}
+					clbSynonymTargets = new CheckedListBox
+					{
+						Name = "clbSynonymTargets",
+						Location = new Point(15, yPosition),
+						Size = new Size(400, 120),
+						CheckOnClick = true,
+						BackColor = Color.White,
+						BorderStyle = BorderStyle.FixedSingle,
+						Visible = false,
+						ScrollAlwaysVisible = true,
+						IntegralHeight = false
 					};
+					synonymGroup.Controls.Add(clbSynonymTargets);
 				}
 
-				// Add tooltips
-				if (toolTip != null)
+				// Create auto-detect button
+				if (FindControlByName("btnAutoDetectTargets") == null)
 				{
-					toolTip.SetToolTip(lblSynonymSourceInfo,
-						"The system will automatically find databases containing 'HiveCFMSurvey' as the source.\n" +
-						"These databases contain the actual CFMSurveyUser table.");
+					btnAutoDetectTargets = new Button
+					{
+						Name = "btnAutoDetectTargets",
+						Text = "🔄 Auto Detect",
+						Location = new Point(425, yPosition),
+						Size = new Size(100, 30),
+						BackColor = Color.LightBlue,
+						FlatStyle = FlatStyle.Flat,
+						Visible = false,
+						Font = new Font(this.Font.FontFamily, 8, FontStyle.Regular)
+					};
+					synonymGroup.Controls.Add(btnAutoDetectTargets);
 
-					toolTip.SetToolTip(clbSynonymTargets,
-						"Select which databases should receive CFMSurveyUser synonyms.\n" +
-						"Typically: HiveCFMApp databases get synonyms, HiveCFMSurvey databases don't.\n" +
-						"Check/uncheck items to customize your selection.");
-
-					toolTip.SetToolTip(btnAutoDetectTargets,
-						"Automatically detect and select HiveCFMApp databases as synonym targets");
+					// Add event handler safely
+					btnAutoDetectTargets.Click += BtnAutoDetectTargets_Click;
 				}
 
-				_logService.LogInfo("✅ Synonym controls initialized successfully");
+				// Add tooltips safely
+				AddSynonymTooltips();
+
+				_logService?.LogInfo("✅ Synonym controls initialized successfully");
 			}
 			catch (Exception ex)
 			{
-				_logService.LogError("Error initializing synonym controls", ex);
-				MessageBox.Show($"Error initializing synonym controls: {ex.Message}", "UI Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				_logService?.LogError("Error initializing synonym controls", ex);
+				MessageBox.Show(
+					$"Warning: Could not initialize synonym controls properly. Some features may be limited.\n\nError: {ex.Message}",
+					"Initialization Warning",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Warning);
 			}
 		}
 		private void DacpacPublisherForm_Load(object sender, EventArgs e)
 		{
-			// Set default values
-			txtServerName.Text = "(local)";
-			chkWindowsAuth.Checked = true;
+			if (IsInDesignMode) return;
 
-			// Initialize UI state
-			chkWindowsAuth_CheckedChanged(chkWindowsAuth, EventArgs.Empty);
-			chkCreateSynonyms_CheckedChanged(chkCreateSynonyms, EventArgs.Empty);
-			chkCreateSqlAgentJobs_CheckedChanged(chkCreateSqlAgentJobs, EventArgs.Empty);
-			chkExecuteProcedures_CheckedChanged(chkExecuteProcedures, EventArgs.Empty);
-
-			UpdateSmartProcedureStatus();
-			InitializeSynonymControls();
-
-			if (cboDatabases != null)
+			try
 			{
-				cboDatabases.SelectedIndexChanged += cboDatabases_SelectedIndexChanged;
+				if (_logService != null)
+					_logService.LogInfo("🚀 DACPAC Publisher started");
+
+				// Set default values
+				if (txtServerName != null) txtServerName.Text = "(local)";
+				if (chkWindowsAuth != null) chkWindowsAuth.Checked = true;
+				if (chkCreateBackup != null) chkCreateBackup.Checked = true;
+
+				// Apply initial state
+				UpdateAuthenticationControls();
+				UpdateStatus("Ready", false);
+
+				// Set focus to server name
+				if (txtServerName != null) txtServerName.Focus();
+
+				_isInitializing = false;
 			}
-
-			var cboDatabases2 = FindControlByName("cboDatabases2") as ComboBox;
-			if (cboDatabases2 != null)
+			catch (Exception ex)
 			{
-				cboDatabases2.SelectedIndexChanged += cboDatabases2_SelectedIndexChanged;
+				if (_logService != null)
+					_logService.LogError("Form load error", ex);
+				HandleError("Form Load Error", ex);
 			}
 		}
 
@@ -292,9 +489,11 @@ namespace DacpacPublisher
 
 		private void ChkShowSynonymTargets_CheckedChanged(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			try
 			{
-				bool showTargets = chkShowSynonymTargets.Checked;
+				bool showTargets = chkShowSynonymTargets?.Checked ?? false;
 
 				// Show/hide the target selection controls
 				if (lblSynonymTargets != null) lblSynonymTargets.Visible = showTargets;
@@ -304,24 +503,24 @@ namespace DacpacPublisher
 				if (showTargets)
 				{
 					// Populate the list when first shown
-					if (clbSynonymTargets.Items.Count == 0)
+					if (clbSynonymTargets?.Items.Count == 0)
 					{
-						// Show loading message
-						clbSynonymTargets.Items.Clear();
-						clbSynonymTargets.Items.Add("Loading databases...");
-
-						// Populate asynchronously
-						Task.Run(async () => {
+						Task.Run(async () =>
+						{
 							try
 							{
 								await PopulateSynonymTargetDatabasesSafe();
 							}
 							catch (Exception ex)
 							{
-								_logService.LogError("Error populating databases", ex);
-								Invoke(new Action(() => {
-									clbSynonymTargets.Items.Clear();
-									clbSynonymTargets.Items.Add($"Error: {ex.Message}");
+								_logService?.LogError("Error populating databases", ex);
+								Invoke(new Action(() =>
+								{
+									if (clbSynonymTargets != null)
+									{
+										clbSynonymTargets.Items.Clear();
+										clbSynonymTargets.Items.Add($"Error: {ex.Message}");
+									}
 								}));
 							}
 						});
@@ -330,45 +529,68 @@ namespace DacpacPublisher
 			}
 			catch (Exception ex)
 			{
-				_logService.LogError("Error in show targets checkbox handler", ex);
+				_logService?.LogError("Error in show targets checkbox handler", ex);
 				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
 		// Replace the existing chkCreateSynonyms_CheckedChanged method
-		private async void chkCreateSynonyms_CheckedChanged(object sender, EventArgs e)
+		private void chkCreateSynonyms_CheckedChanged(object sender, EventArgs e)
 		{
-			bool enabled = chkCreateSynonyms.Checked;
-
-			// Show/hide synonym configuration controls
-			if (lblSynonymSourceInfo != null) lblSynonymSourceInfo.Visible = enabled;
-			if (chkShowSynonymTargets != null) chkShowSynonymTargets.Visible = enabled;
-
-			// Hide advanced controls by default
-			if (lblSynonymTargets != null) lblSynonymTargets.Visible = enabled && chkShowSynonymTargets.Checked;
-			if (clbSynonymTargets != null) clbSynonymTargets.Visible = enabled && chkShowSynonymTargets.Checked;
-			if (btnAutoDetectTargets != null) btnAutoDetectTargets.Visible = enabled && chkShowSynonymTargets.Checked;
-
-			if (enabled)
+			if (IsInDesignMode) return;
+			try
 			{
-				_logService.LogInfo("🔗 Synonym creation enabled");
+				if (_isInitializing) return;
 
-				// Auto-populate and detect if showing targets
-				if (chkShowSynonymTargets?.Checked == true)
+				bool enabled = chkCreateSynonyms?.Checked ?? false;
+				_logService?.LogInfo($"🔗 Synonym creation {(enabled ? "enabled" : "disabled")}");
+
+				// Show/hide synonym configuration panel
+				if (pnlSynonymConfig != null)
 				{
-					await PopulateSynonymTargetDatabases();
+					pnlSynonymConfig.Visible = enabled;
+
+					if (enabled)
+					{
+						// Animate panel appearance
+						AnimatePanel(pnlSynonymConfig, true);
+
+						// Populate databases if not already done
+						Task.Run(async () =>
+						{
+							try
+							{
+								await PopulateSynonymTargetDatabasesSafe();
+							}
+							catch (Exception ex)
+							{
+								_logService?.LogError("Error populating synonym databases", ex);
+							}
+						});
+					}
+					else
+					{
+						// Hide sub-panels when disabled
+						if (chkShowSynonymTargets != null) chkShowSynonymTargets.Checked = false;
+						SafeClearSynonymTargets();
+					}
 				}
 			}
-			else
+			catch (Exception ex)
 			{
-				// Clear selections when disabled
-				clbSynonymTargets?.Items.Clear();
+				_logService?.LogError("Error in synonym checkbox handler", ex);
+				MessageBox.Show(
+					"An error occurred while updating synonym settings. Please try again or restart the application.",
+					"Synonym Configuration Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Warning);
 			}
 		}
 
-
 		private void chkWindowsAuth_CheckedChanged(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			bool useWindowsAuth = chkWindowsAuth.Checked;
 
 			lblUsername.Enabled = !useWindowsAuth;
@@ -385,6 +607,8 @@ namespace DacpacPublisher
 
 		private async void btnTestConnection_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			try
 			{
 				UpdateConfigurationFromUI();
@@ -422,11 +646,15 @@ namespace DacpacPublisher
 
 		private async void btnRefreshDatabases_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			await RefreshDatabasesAsync();
 		}
 
 		private void btnBrowseDacpac_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			if (openDacpacDialog.ShowDialog() == DialogResult.OK)
 			{
 				txtDacpacPath.Text = openDacpacDialog.FileName;
@@ -435,6 +663,8 @@ namespace DacpacPublisher
 
 		private async void btnBrowseJobScripts_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
 			{
 				txtJobScriptsFolder.Text = folderBrowserDialog.SelectedPath;
@@ -444,19 +674,51 @@ namespace DacpacPublisher
 
 		private void chkCreateSqlAgentJobs_CheckedChanged(object sender, EventArgs e)
 		{
-			bool enabled = chkCreateSqlAgentJobs.Checked;
-			lblJobOwnerLoginName.Enabled = enabled;
-			txtJobOwnerLoginName.Enabled = enabled;
-			lblJobDescriptions.Enabled = enabled;
+			if (IsInDesignMode) return;
 
-			if (!enabled)
+			try
 			{
-				txtJobOwnerLoginName.Text = string.Empty;
+				if (_isInitializing) return;
+
+				bool enabled = chkCreateSqlAgentJobs?.Checked ?? false;
+				_logService?.LogInfo($"⚡ SQL Agent Jobs {(enabled ? "enabled" : "disabled")}");
+
+				// Show/hide job configuration panel
+				if (pnlJobConfig != null)
+				{
+					pnlJobConfig.Visible = enabled;
+
+					if (enabled)
+					{
+						// Animate panel appearance
+						AnimatePanel(pnlJobConfig, true);
+
+						// Focus on job owner login
+						if (txtJobOwnerLoginName != null)
+						{
+							txtJobOwnerLoginName.Focus();
+						}
+					}
+					else
+					{
+						// Clear validation results when disabled
+						if (pnlJobValidation != null) pnlJobValidation.Visible = false;
+						if (txtJobOwnerLoginName != null) txtJobOwnerLoginName.Clear();
+						if (txtJobScriptsFolder != null) txtJobScriptsFolder.Clear();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error in SQL Agent Jobs checkbox handler", ex);
+				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
 		private void chkExecuteProcedures_CheckedChanged(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			bool enabled = chkExecuteProcedures.Checked;
 			btnConfigureSmartProcedures.Enabled = enabled;
 			lblSmartProcedureStatus.Enabled = enabled;
@@ -466,6 +728,8 @@ namespace DacpacPublisher
 
 		private async void btnConfigureSmartProcedures_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			try
 			{
 				using (var smartDialog = new SmartProcedureDialog(_currentConfig))
@@ -503,48 +767,53 @@ namespace DacpacPublisher
 
 		private async void btnSaveConfig_Click(object sender, EventArgs e)
 		{
-			if (saveConfigDialog.ShowDialog() == DialogResult.OK)
+			if (IsInDesignMode) return;
+
+			if (saveConfigDialog != null && saveConfigDialog.ShowDialog() == DialogResult.OK)
 			{
-				try
+				await ExecuteWithErrorHandling("Saving Configuration", async () =>
 				{
 					UpdateConfigurationFromUI();
-					await _configurationService.SaveConfigurationAsync(_currentConfig, saveConfigDialog.FileName);
-					MessageBox.Show("💾 Configuration saved successfully!", "Save Configuration",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				}
-				catch (Exception ex)
-				{
-					_logService.LogError("Failed to save configuration", ex);
-					MessageBox.Show($"❌ Failed to save configuration: {ex.Message}", "Error",
-						MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
+					await _configurationService.SaveConfigurationAsync(_currentConfig, saveConfigDialog.FileName).ConfigureAwait(false);
+
+					Invoke(new Action(() =>
+					{
+						ShowSuccessMessage("💾 Configuration saved successfully!", "Save Configuration");
+						if (_logService != null)
+							_logService.LogInfo("💾 Configuration saved: " + Path.GetFileName(saveConfigDialog.FileName));
+					}));
+				}).ConfigureAwait(false);
 			}
 		}
 
 		private async void btnLoadConfig_Click(object sender, EventArgs e)
 		{
-			if (openConfigDialog.ShowDialog() == DialogResult.OK)
+			if (IsInDesignMode) return;
+
+			if (openConfigDialog != null && openConfigDialog.ShowDialog() == DialogResult.OK)
 			{
-				try
+				await ExecuteWithErrorHandling("Loading Configuration", async () =>
 				{
-					// FIXED: Remove await since LoadConfigurationAsync is not actually async
-					_currentConfig = await _configurationService.LoadConfigurationAsync(openConfigDialog.FileName);
-					UpdateUIFromConfiguration();
-					MessageBox.Show("📂 Configuration loaded successfully!", "Load Configuration",
-						MessageBoxButtons.OK, MessageBoxIcon.Information);
-				}
-				catch (Exception ex)
-				{
-					_logService.LogError("Failed to load configuration", ex);
-					MessageBox.Show($"❌ Failed to load configuration: {ex.Message}", "Error",
-						MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
+					_currentConfig = await _configurationService.LoadConfigurationAsync(openConfigDialog.FileName).ConfigureAwait(false);
+
+					Invoke(new Action(() =>
+					{
+						UpdateUIFromConfiguration();
+						ShowSuccessMessage("📂 Configuration loaded successfully!", "Load Configuration");
+						if (_logService != null)
+							_logService.LogInfo("📂 Configuration loaded: " + Path.GetFileName(openConfigDialog.FileName));
+					}));
+				}).ConfigureAwait(false);
 			}
 		}
 		private async void btnPublish_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			try
 			{
+				await ExecuteDeploymentAsync();
+
 				UpdateConfigurationFromUI();
 
 				if (!await ValidateConfigurationAsync())
@@ -727,43 +996,50 @@ namespace DacpacPublisher
 		}
 		private async void BtnAutoDetectTargets_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			try
 			{
-				btnAutoDetectTargets.Enabled = false;
-				btnAutoDetectTargets.Text = "🔄 Detecting...";
+				if (btnAutoDetectTargets != null)
+				{
+					btnAutoDetectTargets.Enabled = false;
+					btnAutoDetectTargets.Text = "🔄 Detecting...";
+				}
 
 				// Refresh the list
 				await PopulateSynonymTargetDatabasesSafe();
 
 				// Auto-check HiveCFMApp databases
-				for (int i = 0; i < clbSynonymTargets.Items.Count; i++)
+				if (clbSynonymTargets != null)
 				{
-					string item = clbSynonymTargets.Items[i].ToString();
-
-					// Check items that start with ✅ (HiveCFMApp databases)
-					bool shouldCheck = item.StartsWith("✅");
-					clbSynonymTargets.SetItemChecked(i, shouldCheck);
+					for (int i = 0; i < clbSynonymTargets.Items.Count; i++)
+					{
+						string item = clbSynonymTargets.Items[i].ToString();
+						bool shouldCheck = item.StartsWith("✅");
+						clbSynonymTargets.SetItemChecked(i, shouldCheck);
+					}
 				}
 
-				MessageBox.Show(
+				ShowSuccessMessage(
 					"✅ Auto-detection complete!\n\n" +
 					"HiveCFMApp databases have been selected as targets.\n" +
 					"HiveCFMSurvey databases are marked as sources.\n\n" +
 					"You can manually adjust the selection if needed.",
-					"Auto Detection Complete",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Information);
+					"Auto Detection Complete");
 			}
 			catch (Exception ex)
 			{
-				_logService.LogError("Error in auto-detect", ex);
+				_logService?.LogError("Error in auto-detect", ex);
 				MessageBox.Show($"Error during auto-detection: {ex.Message}", "Error",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 			finally
 			{
-				btnAutoDetectTargets.Enabled = true;
-				btnAutoDetectTargets.Text = "🔄 Auto Detect";
+				if (btnAutoDetectTargets != null)
+				{
+					btnAutoDetectTargets.Enabled = true;
+					btnAutoDetectTargets.Text = "🔄 Auto Detect";
+				}
 			}
 		}
 		#endregion
@@ -777,7 +1053,8 @@ namespace DacpacPublisher
 				var databases = await GetDatabasesForSynonymTargets();
 
 				// Update UI on main thread
-				Invoke(new Action(() => {
+				Invoke(new Action(() =>
+				{
 					PopulateSynonymTargetsList(databases);
 				}));
 			}
@@ -890,79 +1167,6 @@ namespace DacpacPublisher
 				clbSynonymTargets.Items.Add($"Error: {ex.Message}");
 			}
 		}
-		private void UpdateSmartProcedureStatus()
-		{
-			if (lblSmartProcedureStatus == null) return;
-
-			try
-			{
-				if (_currentConfig.SmartProcedures?.Any() == true)
-				{
-					var count = _currentConfig.SmartProcedures.Count;
-					var db1Count = _currentConfig.SmartProcedures.Count(p => p.ExecuteOnDatabase1);
-					var db2Count = _currentConfig.SmartProcedures.Count(p => p.ExecuteOnDatabase2);
-
-					lblSmartProcedureStatus.Text = $"✅ {count} procedures configured (Primary: {db1Count}, Secondary: {db2Count})";
-					lblSmartProcedureStatus.ForeColor = Color.Green;
-				}
-				else
-				{
-					lblSmartProcedureStatus.Text = "⚙️ Click 'Configure Smart Procedures' to get started";
-					lblSmartProcedureStatus.ForeColor = Color.Gray;
-				}
-			}
-			catch (Exception ex)
-			{
-				lblSmartProcedureStatus.Text = $"❌ Error: {ex.Message}";
-				lblSmartProcedureStatus.ForeColor = Color.Red;
-			}
-		}
-
-		private async Task RefreshDatabasesAsync()
-		{
-			try
-			{
-				UpdateConfigurationFromUI();
-				var connectionInfo = CreateConnectionInfo(_currentConfig);
-
-				toolStripStatusLabel.Text = "Refreshing databases...";
-				toolStripProgressBar.Visible = true;
-
-				var databases = await _connectionService.GetDatabasesAsync(connectionInfo);
-
-				string currentSelection = cboDatabases.SelectedItem?.ToString();
-				cboDatabases.Items.Clear();
-
-				foreach (string db in databases)
-				{
-					cboDatabases.Items.Add(db);
-				}
-
-				if (!string.IsNullOrEmpty(currentSelection) && cboDatabases.Items.Contains(currentSelection))
-				{
-					cboDatabases.SelectedItem = currentSelection;
-				}
-				else if (cboDatabases.Items.Count > 0)
-				{
-					cboDatabases.SelectedIndex = 0;
-				}
-
-				_logService.LogInfo($"Refreshed {databases.Count} databases");
-			}
-			catch (Exception ex)
-			{
-				_logService.LogError("Failed to refresh databases", ex);
-				MessageBox.Show($"❌ Failed to refresh databases: {ex.Message}", "Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-			finally
-			{
-				toolStripStatusLabel.Text = "Ready";
-				toolStripProgressBar.Visible = false;
-			}
-		}
-
-		// Replace your ValidateJobScriptsFolderAsync method with this safe version:
 
 		private async Task ValidateJobScriptsFolderAsync()
 		{
@@ -1036,16 +1240,6 @@ namespace DacpacPublisher
 			lblJobDescriptions.ForeColor = color;
 		}
 
-		private void UpdateStatusUI(string status)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new Action(() => UpdateStatusUI(status)));
-				return;
-			}
-
-			toolStripStatusLabel.Text = status;
-		}
 
 		private void EnableSqlAgentJobs(bool enabled)
 		{
@@ -1097,144 +1291,6 @@ namespace DacpacPublisher
 			return errors;
 		}
 
-		private void UpdateConfigurationFromUI()
-		{
-			try
-			{
-				// Basic connection settings
-				_currentConfig.ServerName = txtServerName?.Text?.Trim() ?? "";
-				_currentConfig.WindowsAuth = chkWindowsAuth?.Checked ?? false;
-				_currentConfig.Username = txtUsername?.Text?.Trim() ?? "";
-				_currentConfig.Password = txtPassword?.Text ?? "";
-				_currentConfig.Database = cboDatabases?.SelectedItem?.ToString()?.Trim() ?? "";
-				_currentConfig.DacpacPath = txtDacpacPath?.Text?.Trim() ?? "";
-
-				// IMPROVED: Smart Synonym settings with intelligent defaults
-				_currentConfig.CreateSynonyms = chkCreateSynonyms?.Checked ?? false;
-
-				if (_currentConfig.CreateSynonyms)
-				{
-					// Clear previous selections
-					_currentConfig.SynonymTargetDatabases = new List<string>();
-
-					// Get selected target databases from the checklist
-					if (clbSynonymTargets != null && chkShowSynonymTargets?.Checked == true)
-					{
-						for (int i = 0; i < clbSynonymTargets.Items.Count; i++)
-						{
-							if (clbSynonymTargets.GetItemChecked(i))
-							{
-								string item = clbSynonymTargets.Items[i].ToString();
-
-								// Extract database name (remove prefixes)
-								if (item.StartsWith("✅ ") || item.StartsWith("📋 ") || item.StartsWith("📁 "))
-								{
-									string dbName = item.Substring(2).Trim();
-									_currentConfig.SynonymTargetDatabases.Add(dbName);
-								}
-							}
-						}
-
-						_logService?.LogInfo($"🎯 Selected {_currentConfig.SynonymTargetDatabases.Count} target database(s) for synonyms: {string.Join(", ", _currentConfig.SynonymTargetDatabases)}");
-					}
-
-					// Set source to auto-detect
-					_currentConfig.SynonymSourceDb = "AUTO_DETECT";
-				}
-				else
-				{
-					_currentConfig.SynonymTargetDatabases = new List<string>();
-				}
-
-				// SQL Agent Jobs settings
-				_currentConfig.CreateSqlAgentJobs = chkCreateSqlAgentJobs?.Checked ?? false;
-				_currentConfig.JobOwnerLoginName = (_currentConfig.CreateSqlAgentJobs) ? (txtJobOwnerLoginName?.Text?.Trim() ?? "") : "";
-				_currentConfig.JobScriptsFolder = (_currentConfig.CreateSqlAgentJobs) ? (txtJobScriptsFolder?.Text?.Trim() ?? "") : "";
-
-				// Smart Stored Procedures settings
-				_currentConfig.ExecuteProcedures = chkExecuteProcedures?.Checked ?? false;
-				_currentConfig.UseSmartProcedures = true; // Always use smart procedures in this version
-
-				// Backup settings
-				_currentConfig.CreateBackupBeforeDeployment = chkCreateBackup?.Checked ?? false;
-
-				// FIXED: Multiple databases settings - Check if controls exist first
-				var multiDbCheckbox = FindControlByName("chkEnableMultipleDatabases") as CheckBox;
-				_currentConfig.EnableMultipleDatabases = multiDbCheckbox?.Checked ?? false;
-
-				// IMPROVED: Enhanced multiple database configuration with synonym intelligence
-				if (_currentConfig.EnableMultipleDatabases)
-				{
-					var cboDatabases2 = FindControlByName("cboDatabases2") as ComboBox;
-					var txtDacpacPath2 = FindControlByName("txtDacpacPath2") as TextBox;
-
-					if (cboDatabases2?.SelectedItem != null)
-					{
-						// Initialize DeploymentTargets if null
-						if (_currentConfig.DeploymentTargets == null)
-							_currentConfig.DeploymentTargets = new List<DatabaseDeploymentTarget>();
-
-						// Update or add secondary database target
-						var secondaryTarget = _currentConfig.DeploymentTargets.FirstOrDefault(t => t.Name == "Secondary");
-						if (secondaryTarget == null)
-						{
-							secondaryTarget = new DatabaseDeploymentTarget
-							{
-								Name = "Secondary",
-								ServerName = _currentConfig.ServerName,
-								IsEnabled = true
-							};
-							_currentConfig.DeploymentTargets.Add(secondaryTarget);
-						}
-
-						// Update secondary database settings
-						secondaryTarget.Database = cboDatabases2.SelectedItem?.ToString()?.Trim() ?? "";
-						secondaryTarget.DacpacPath = txtDacpacPath2?.Text?.Trim() ?? _currentConfig.DacpacPath;
-
-						_logService?.LogInfo($"📊 Multiple databases configured: Primary='{_currentConfig.Database}', Secondary='{secondaryTarget.Database}'");
-					}
-				}
-				else
-				{
-					// Clear deployment targets if multiple databases is disabled
-					_currentConfig.DeploymentTargets?.Clear();
-				}
-
-				// Update stored procedures from smart procedures
-				if (_currentConfig.StoredProcedures == null)
-					_currentConfig.StoredProcedures = new List<StoredProcedureInfo>();
-
-				_currentConfig.StoredProcedures.Clear();
-
-				if (_currentConfig.ExecuteProcedures && _currentConfig.SmartProcedures?.Any() == true)
-				{
-					_currentConfig.StoredProcedures = _currentConfig.SmartProcedures
-						.Select(sp => new StoredProcedureInfo
-						{
-							Name = sp?.Name ?? "",
-							Parameters = sp?.Parameters ?? "",
-							ExecutionOrder = sp?.ExecutionOrder ?? 0,
-							Description = sp?.Description ?? ""
-						})
-						.ToList();
-
-					_logService?.LogInfo($"📋 Updated {_currentConfig.StoredProcedures.Count} stored procedures from smart configuration");
-				}
-
-				// ENHANCED: Validation and logging for synonym configuration
-				if (_currentConfig.CreateSynonyms)
-				{
-					ValidateAndLogSynonymConfiguration();
-				}
-
-				_logService?.LogInfo("✅ Configuration updated from UI successfully");
-			}
-			catch (Exception ex)
-			{
-				_logService?.LogError("Failed to update configuration from UI", ex);
-				throw new InvalidOperationException($"Configuration update failed: {ex.Message}", ex);
-			}
-		}
 		private void ValidateAndLogSynonymConfiguration()
 		{
 			try
@@ -1526,86 +1582,7 @@ namespace DacpacPublisher
 			}
 		}
 
-		private void UpdateUIFromConfiguration()
-		{
-			try
-			{
-				// Basic settings with null checks
-				if (txtServerName != null) txtServerName.Text = _currentConfig.ServerName ?? "";
-				if (chkWindowsAuth != null) chkWindowsAuth.Checked = _currentConfig.WindowsAuth;
-				if (txtUsername != null) txtUsername.Text = _currentConfig.Username ?? "";
-				if (txtPassword != null) txtPassword.Text = _currentConfig.Password ?? "";
-				if (txtDacpacPath != null) txtDacpacPath.Text = _currentConfig.DacpacPath ?? "";
 
-				// Feature settings
-				if (chkCreateSynonyms != null) chkCreateSynonyms.Checked = _currentConfig.CreateSynonyms;
-				if (txtSynonymSourceDb != null) txtSynonymSourceDb.Text = _currentConfig.SynonymSourceDb ?? "";
-				if (chkCreateSqlAgentJobs != null) chkCreateSqlAgentJobs.Checked = _currentConfig.CreateSqlAgentJobs;
-				if (txtJobOwnerLoginName != null) txtJobOwnerLoginName.Text = _currentConfig.JobOwnerLoginName ?? "";
-				if (txtJobScriptsFolder != null) txtJobScriptsFolder.Text = _currentConfig.JobScriptsFolder ?? "";
-				if (chkExecuteProcedures != null) chkExecuteProcedures.Checked = _currentConfig.ExecuteProcedures;
-				if (chkCreateBackup != null) chkCreateBackup.Checked = _currentConfig.CreateBackupBeforeDeployment;
-
-				// FIXED: Multiple databases settings - Find controls dynamically
-				var multiDbCheckbox = FindControlByName("chkEnableMultipleDatabases") as CheckBox;
-				if (multiDbCheckbox != null)
-				{
-					multiDbCheckbox.Checked = _currentConfig.EnableMultipleDatabases;
-				}
-
-				// FIXED: Load secondary database configuration
-				if (_currentConfig.EnableMultipleDatabases && _currentConfig.DeploymentTargets?.Any() == true)
-				{
-					var secondaryTarget = _currentConfig.DeploymentTargets.FirstOrDefault(t => t.Name == "Secondary");
-					if (secondaryTarget != null)
-					{
-						var cboDatabases2 = FindControlByName("cboDatabases2") as ComboBox;
-						var txtDacpacPath2 = FindControlByName("txtDacpacPath2") as TextBox;
-
-						// Update secondary database if control exists
-						if (cboDatabases2 != null && !string.IsNullOrEmpty(secondaryTarget.Database))
-						{
-							if (!cboDatabases2.Items.Contains(secondaryTarget.Database))
-								cboDatabases2.Items.Add(secondaryTarget.Database);
-							cboDatabases2.SelectedItem = secondaryTarget.Database;
-						}
-
-						// Update secondary DACPAC path if control exists
-						if (txtDacpacPath2 != null)
-							txtDacpacPath2.Text = secondaryTarget.DacpacPath ?? "";
-					}
-				}
-
-				// Enable/disable multiple database controls
-				ToggleMultipleDatabaseControls(_currentConfig.EnableMultipleDatabases);
-
-				// Update primary database dropdown if possible
-				if (cboDatabases != null && !string.IsNullOrEmpty(_currentConfig.Database))
-				{
-					if (!cboDatabases.Items.Contains(_currentConfig.Database))
-					{
-						cboDatabases.Items.Add(_currentConfig.Database);
-					}
-					cboDatabases.SelectedItem = _currentConfig.Database;
-				}
-
-				UpdateSmartProcedureStatus();
-
-				// Trigger job script validation if folder is specified
-				if (!string.IsNullOrEmpty(_currentConfig.JobScriptsFolder))
-				{
-					Task.Run(async () => await ValidateJobScriptsFolderAsync());
-				}
-
-				_logService?.LogInfo("✅ UI updated from configuration successfully");
-			}
-			catch (Exception ex)
-			{
-				_logService?.LogError("Failed to update UI from configuration", ex);
-				MessageBox.Show($"⚠️ Warning: Some settings could not be restored: {ex.Message}",
-					"Configuration Load Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-			}
-		}
 		private void ToggleMultipleDatabaseControls(bool enabled)
 		{
 			try
@@ -1632,16 +1609,41 @@ namespace DacpacPublisher
 			}
 		}
 
-		private ConnectionInfo CreateConnectionInfo(PublisherConfiguration config)
+		private void UpdateDatabaseComboBox(ComboBox comboBox, List<string> databases)
 		{
-			return new ConnectionInfo
+			try
 			{
-				ServerName = config.ServerName,
-				WindowsAuth = config.WindowsAuth,
-				Username = config.Username,
-				Password = config.Password,
-				Database = config.Database
-			};
+				if (InvokeRequired)
+				{
+					Invoke(new Action(() => UpdateDatabaseComboBox(comboBox, databases)));
+					return;
+				}
+
+				if (comboBox == null) return;
+
+				var currentSelection = comboBox.SelectedItem?.ToString();
+
+				comboBox.Items.Clear();
+
+				foreach (var database in databases.OrderBy(db => db))
+				{
+					comboBox.Items.Add(database);
+				}
+
+				// Restore selection if possible
+				if (!string.IsNullOrEmpty(currentSelection) && comboBox.Items.Contains(currentSelection))
+				{
+					comboBox.SelectedItem = currentSelection;
+				}
+				else if (comboBox.Items.Count > 0)
+				{
+					comboBox.SelectedIndex = 0;
+				}
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Database combo update error: {ex.Message}");
+			}
 		}
 
 		// SOLUTION 1: Safe DeployDatabaseAsync method with null checks
@@ -1796,70 +1798,6 @@ namespace DacpacPublisher
 			}
 		}
 
-		// FIXED VERSION: Replace your BuildSuccessMessage method in DacpacPublisherForm.cs
-		private string BuildSuccessMessage(DeploymentResult result)
-		{
-			var message = new StringBuilder();
-			message.AppendLine("🎉 Deployment Completed Successfully!");
-			message.AppendLine();
-			message.AppendLine($"✅ Database: {_currentConfig.Database ?? "Unknown"}");
-			message.AppendLine($"✅ Server: {_currentConfig.ServerName ?? "Unknown"}");
-			message.AppendLine($"⏱️ Duration: {result.Duration:mm\\:ss}");
-
-			if (result.ProceduresExecuted > 0)
-				message.AppendLine($"🔧 Procedures Executed: {result.ProceduresExecuted}");
-
-			if (result.JobsCreated > 0)
-				message.AppendLine($"⚙️ Jobs Created: {result.JobsCreated}");
-
-			if (result.SynonymsCreated > 0)
-				message.AppendLine($"🔗 Synonyms Created: {result.SynonymsCreated}");
-
-			if (!string.IsNullOrEmpty(result.BackupPath))
-				message.AppendLine($"💾 Backup: {Path.GetFileName(result.BackupPath)}");
-
-			// ENHANCED: Service Broker-aware categorization
-			var category = DeploymentConfiguration.CategorizeResult(result.Errors, result.Warnings);
-
-			switch (category)
-			{
-				case DeploymentResultCategory.SuccessWithIgnorableErrors:
-					var autoGenCount = CountServiceBrokerErrors(result.Errors, result.Warnings);
-					message.AppendLine($"⏭️ Service Broker Procedures Handled: {autoGenCount}");
-					message.AppendLine("💡 These are auto-generated procedures with GUID identifiers");
-					message.AppendLine("🤖 Created by SQL Server Service Broker and safely excluded");
-					break;
-
-				case DeploymentResultCategory.SuccessWithWarnings:
-					var warningCount = result.Warnings.Count;
-					var serviceBrokerWarnings = result.Warnings.Count(w =>
-						DeploymentConfiguration.IsIgnorableError(w));
-
-					if (serviceBrokerWarnings > 0)
-					{
-						message.AppendLine($"⚠️ Warnings: {warningCount} total ({serviceBrokerWarnings} Service Broker related)");
-						message.AppendLine("💡 Service Broker warnings are expected and can be ignored");
-					}
-					else
-					{
-						message.AppendLine($"⚠️ Minor Warnings: {warningCount} (check log for details)");
-					}
-					break;
-			}
-
-			// Add Service Broker explanation if relevant
-			if (HasServiceBrokerIssues(result))
-			{
-				message.AppendLine();
-				message.AppendLine("🔍 About Service Broker Auto-Generated Procedures:");
-				message.AppendLine("• These procedures have GUID identifiers (e.g., QueueActionSender_5f17ce3a-41a0...)");
-				message.AppendLine("• They are automatically created by SQL Server Service Broker");
-				message.AppendLine("• Your deployment excluded them to prevent conflicts");
-				message.AppendLine("• Your application functionality is not affected");
-			}
-
-			return message.ToString();
-		}
 
 		// ADD these helper methods to DacpacPublisherForm.cs
 		private int CountServiceBrokerErrors(List<string> errors, List<string> warnings)
@@ -1886,114 +1824,7 @@ namespace DacpacPublisher
 				msg.Contains("BulkSurveyQueue") ||
 				System.Text.RegularExpressions.Regex.IsMatch(msg, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"));
 		}
-		private string BuildFailureMessage(DeploymentResult result)
-		{
-			var message = new StringBuilder();
 
-			var category = DeploymentConfiguration.CategorizeResult(result.Errors, result.Warnings);
-
-			switch (category)
-			{
-				case DeploymentResultCategory.SuccessWithIgnorableErrors:
-					message.AppendLine("🎉 Deployment Actually Succeeded!");
-					message.AppendLine("(Despite some auto-generated procedure warnings)");
-					message.AppendLine();
-					var autoGenCount = CountAutoGeneratedErrors(result.Errors);
-					message.AppendLine($"⏭️ Auto-Generated Procedures Safely Ignored: {autoGenCount}");
-					message.AppendLine();
-					message.AppendLine("🤖 What happened:");
-					message.AppendLine("• SQL Server Service Broker created some auto-generated procedures");
-					message.AppendLine("• These procedures have GUID identifiers and are system-generated");
-					message.AppendLine("• Your DACPAC deployment succeeded despite these warnings");
-					message.AppendLine("• Your application should work normally");
-					break;
-
-				default:
-					message.AppendLine($"❌ Deployment Failed: {result.Message}");
-					message.AppendLine();
-
-					var categorizedErrors = CategorizeErrorsEnhanced(result.Errors);
-
-					if (categorizedErrors.ContainsKey("Critical"))
-					{
-						message.AppendLine("🔥 Critical Errors (require immediate attention):");
-						foreach (var error in categorizedErrors["Critical"].Take(3))
-						{
-							message.AppendLine($"  • {TruncateErrorMessage(error)}");
-						}
-						message.AppendLine();
-					}
-
-					if (categorizedErrors.ContainsKey("AutoGenerated"))
-					{
-						message.AppendLine("⚙️ Auto-Generated Procedure Issues (can usually be ignored):");
-						message.AppendLine($"  • {categorizedErrors["AutoGenerated"].Count} auto-generated procedures not found");
-						message.AppendLine("  • These are typically created by SQL Server Service Broker");
-						message.AppendLine("  • Consider this deployment successful if no other critical errors exist");
-						message.AppendLine();
-					}
-
-					if (categorizedErrors.ContainsKey("SqlCmd"))
-					{
-						message.AppendLine("📝 SqlCmd Variable Issues:");
-						foreach (var error in categorizedErrors["SqlCmd"].Take(2))
-						{
-							message.AppendLine($"  • {TruncateErrorMessage(error)}");
-						}
-						message.AppendLine();
-					}
-
-					if (categorizedErrors.ContainsKey("Configuration"))
-					{
-						message.AppendLine("⚙️ Configuration Issues:");
-						foreach (var error in categorizedErrors["Configuration"].Take(2))
-						{
-							message.AppendLine($"  • {TruncateErrorMessage(error)}");
-						}
-						message.AppendLine();
-					}
-					break;
-			}
-
-			// ENHANCED: Smart recommendations based on error categories
-			message.AppendLine("🔧 RECOMMENDED ACTIONS:");
-
-			switch (category)
-			{
-				case DeploymentResultCategory.SuccessWithIgnorableErrors:
-					message.AppendLine("  ✅ No action needed - deployment was successful!");
-					message.AppendLine("  💡 The auto-generated procedure warnings can be safely ignored");
-					message.AppendLine("  🔍 Verify your application works as expected");
-					break;
-
-				case DeploymentResultCategory.CriticalFailure:
-					message.AppendLine("  1. Fix critical errors above");
-					message.AppendLine("  2. Verify database permissions");
-					message.AppendLine("  3. Check DACPAC file integrity");
-					break;
-
-				default:
-					var hasAutoGenErrors = result.Errors?.Any(e => DeploymentConfiguration.IsIgnorableError(e)) == true;
-					if (hasAutoGenErrors)
-					{
-						message.AppendLine("  1. Consider this deployment successful if only auto-generated procedure errors exist");
-						message.AppendLine("  2. Test your application functionality");
-						message.AppendLine("  3. Review non-critical warnings in the log");
-					}
-					else
-					{
-						message.AppendLine("  1. Review detailed log for specific issues");
-						message.AppendLine("  2. Verify connection settings");
-						message.AppendLine("  3. Check SQL Server error logs");
-					}
-					break;
-			}
-
-			message.AppendLine();
-			message.AppendLine("📋 Check the deployment log for complete technical details.");
-
-			return message.ToString();
-		}
 		/// <summary>
 		/// Filter critical warnings from the full list
 		/// </summary>
@@ -2148,9 +1979,6 @@ namespace DacpacPublisher
 			return error.Substring(0, maxLength) + "...";
 		}
 
-
-
-
 		// UPDATED: Better error message building for failed deployments
 		/// <summary>
 		/// SAFE version of switching to data viewer
@@ -2289,6 +2117,8 @@ namespace DacpacPublisher
 		{
 			try
 			{
+				if (string.IsNullOrEmpty(name)) return null;
+
 				return FindControlByNameRecursive(this, name);
 			}
 			catch (Exception ex)
@@ -2300,22 +2130,29 @@ namespace DacpacPublisher
 
 		private Control FindControlByNameRecursive(Control parent, string name)
 		{
-			if (parent?.Name == name)
-				return parent;
-
-			if (parent?.Controls != null)
+			try
 			{
-				foreach (Control child in parent.Controls)
+				if (parent?.Name == name)
+					return parent;
+
+				if (parent?.Controls != null)
 				{
-					var found = FindControlByNameRecursive(child, name);
-					if (found != null)
-						return found;
+					foreach (Control child in parent.Controls)
+					{
+						var found = FindControlByNameRecursive(child, name);
+						if (found != null)
+							return found;
+					}
 				}
+			}
+			catch (Exception ex)
+			{
+				// Log but don't throw - continue searching
+				System.Diagnostics.Debug.WriteLine($"Error searching in control {parent?.Name}: {ex.Message}");
 			}
 
 			return null;
 		}
-
 		/// <summary>
 		/// SAFE version of handling deployment failure with backup
 		/// </summary>
@@ -2388,11 +2225,6 @@ namespace DacpacPublisher
 				_logService.LogError("Error handling deployment failure with backup", ex);
 			}
 		}
-
-
-
-
-
 
 		private async Task<string> CreateBackupAsync()
 		{
@@ -2728,80 +2560,85 @@ namespace DacpacPublisher
 				_logService.LogError("Error handling deployment failure with backup", ex);
 			}
 		}
-		private void OnLogMessageReceived(string message)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new Action<string>(OnLogMessageReceived), message);
-				return;
-			}
 
-			txtLog.AppendText($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
-			txtLog.ScrollToCaret();
-		}
-
-		private void OnProgressChanged(int progress)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new Action<int>(OnProgressChanged), progress);
-				return;
-			}
-
-			if (toolStripProgressBar.Style == ProgressBarStyle.Blocks)
-			{
-				toolStripProgressBar.Value = Math.Min(progress, 100);
-			}
-		}
 
 		private async void BtnRefreshTables_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			try
 			{
-				if (string.IsNullOrEmpty(_currentConfig.ServerName) || string.IsNullOrEmpty(_currentConfig.Database))
+				if (string.IsNullOrEmpty(_currentConfig?.ServerName) || string.IsNullOrEmpty(_currentConfig?.Database))
 				{
 					MessageBox.Show("Please configure database connection first.", "Connection Required",
 						MessageBoxButtons.OK, MessageBoxIcon.Warning);
-					tabControl.SelectedTab = tabSetup;
+
+					// Switch to setup tab
+					if (tabControl?.TabPages != null)
+					{
+						foreach (TabPage tab in tabControl.TabPages)
+						{
+							if (tab.Text.Contains("Setup"))
+							{
+								tabControl.SelectedTab = tab;
+								break;
+							}
+						}
+					}
 					return;
 				}
 
 				btnRefreshTables.Enabled = false;
+				btnRefreshTables.Text = "🔄 Loading...";
 				progressQuery.Visible = true;
-				progressQuery.Style = ProgressBarStyle.Marquee;
 
 				var connectionInfo = CreateConnectionInfo(_currentConfig);
-				var tables = await _dataAnalysisService.GetTablesAsync(connectionInfo);
 
-				cboTables.Items.Clear();
-				foreach (var table in tables)
+				if (_dataAnalysisService != null)
 				{
-					cboTables.Items.Add(table);
+					var tables = await _dataAnalysisService.GetTablesAsync(connectionInfo);
+
+					cboTables.Items.Clear();
+					foreach (var table in tables)
+					{
+						cboTables.Items.Add(table);
+					}
+
+					lblTableCount.Text = $"Tables: {tables.Count}";
+
+					if (tables.Count > 0)
+					{
+						cboTables.SelectedIndex = 0;
+						await LoadDatabaseSummary();
+					}
+
+					_logService?.LogInfo($"📊 Loaded {tables.Count} tables in Data Viewer");
 				}
-
-				lblTableCount.Text = $"Tables: {tables.Count}";
-
-				if (tables.Count > 0)
+				else
 				{
-					cboTables.SelectedIndex = 0;
-					await LoadDatabaseSummary();
+					MessageBox.Show("Data analysis service is not available.", "Service Unavailable",
+						MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				}
 			}
 			catch (Exception ex)
 			{
-				_logService.LogError("Failed to refresh tables", ex);
+				_logService?.LogError("Failed to refresh tables", ex);
 				MessageBox.Show($"Failed to refresh tables: {ex.Message}", "Error",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 			finally
 			{
 				btnRefreshTables.Enabled = true;
+				btnRefreshTables.Text = "🔄 Refresh Tables";
 				progressQuery.Visible = false;
 			}
 		}
 
+
 		private async void BtnQueryTable_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
+
 			if (cboTables.SelectedItem == null)
 			{
 				MessageBox.Show("Please select a table first.", "No Table Selected",
@@ -2814,6 +2651,7 @@ namespace DacpacPublisher
 
 		private async void BtnExecuteQuery_Click(object sender, EventArgs e)
 		{
+			if (IsInDesignMode) return;
 			if (string.IsNullOrWhiteSpace(txtCustomQuery.Text))
 			{
 				MessageBox.Show("Please enter a custom query.", "No Query Entered",
@@ -3454,6 +3292,14 @@ namespace DacpacPublisher
 			}
 		}
 
+		private void ChkWindowsAuth_CheckedChanged(object sender, EventArgs e)
+		{
+			if (_isInitializing) return;
+
+			UpdateAuthenticationControls();
+			_logService?.LogInfo($"Authentication mode changed: {(chkWindowsAuth.Checked ? "Windows" : "SQL Server")}");
+		}
+
 		#endregion
 
 
@@ -3481,6 +3327,7 @@ namespace DacpacPublisher
 
 
 
+
 		// Event handler for second DACPAC browse
 		private void btnBrowseDacpac2_Click(object sender, EventArgs e)
 		{
@@ -3498,53 +3345,6 @@ namespace DacpacPublisher
 			await RefreshDatabases2Async();
 		}
 
-
-		// Method to refresh second database dropdown
-		private async Task RefreshDatabases2Async()
-		{
-			try
-			{
-				UpdateConfigurationFromUI();
-				var connectionInfo = CreateConnectionInfo(_currentConfig);
-
-				toolStripStatusLabel.Text = "Refreshing databases for target 2...";
-				toolStripProgressBar.Visible = true;
-
-				var databases = await _connectionService.GetDatabasesAsync(connectionInfo);
-
-				string currentSelection = cboDatabases2.SelectedItem?.ToString();
-				cboDatabases2.Items.Clear();
-
-				foreach (string db in databases)
-				{
-					cboDatabases2.Items.Add(db);
-				}
-
-				if (!string.IsNullOrEmpty(currentSelection) && cboDatabases2.Items.Contains(currentSelection))
-				{
-					cboDatabases2.SelectedItem = currentSelection;
-				}
-				else if (cboDatabases2.Items.Count > 0)
-				{
-					cboDatabases2.SelectedIndex = 0;
-				}
-			}
-			catch (Exception ex)
-			{
-				_logService.LogError("Failed to refresh databases for target 2", ex);
-				MessageBox.Show($"Failed to refresh databases: {ex.Message}", "Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-			finally
-			{
-				toolStripStatusLabel.Text = "Ready";
-				toolStripProgressBar.Visible = false;
-			}
-		}
-
-
-
-		// Multiple Databases Checkbox Event Handler
 		private void chkEnableMultipleDatabases_CheckedChanged(object sender, EventArgs e)
 		{
 			bool enabled = chkEnableMultipleDatabases.Checked;
@@ -3638,194 +3438,89 @@ namespace DacpacPublisher
 			return recoverableErrors > 0 && (recoverableErrors >= totalErrors * 0.7); // 70% or more are recoverable
 		}
 
-		/// <summary>
-		/// ENHANCED: Configuration validation with auto-generated procedure awareness
-		/// </summary>
-		private async Task<bool> ValidateConfigurationAsync()
+		private void SafeSetControlVisibility(string controlName, bool visible)
 		{
-			var errors = new List<string>();
-
 			try
 			{
-				// Basic validation with null checks
-				if (string.IsNullOrWhiteSpace(txtServerName?.Text))
-					errors.Add("Server Name is required");
-
-				if (string.IsNullOrWhiteSpace(cboDatabases?.Text))
-					errors.Add("Target Database must be selected");
-
-				if (string.IsNullOrWhiteSpace(txtDacpacPath?.Text))
-					errors.Add("DACPAC file path is required");
-				else if (!File.Exists(txtDacpacPath.Text.Trim()))
-					errors.Add($"DACPAC file not found: {txtDacpacPath.Text}");
-
-				// Authentication validation
-				if (!(chkWindowsAuth?.Checked ?? false))
+				var control = FindControlByName(controlName);
+				if (control != null)
 				{
-					if (string.IsNullOrWhiteSpace(txtUsername?.Text))
-						errors.Add("Username is required for SQL authentication");
-					if (string.IsNullOrWhiteSpace(txtPassword?.Text))
-						errors.Add("Password is required for SQL authentication");
+					control.Visible = visible;
 				}
-
-				// SQL Agent Jobs validation
-				if (chkCreateSqlAgentJobs?.Checked == true)
-				{
-					if (string.IsNullOrWhiteSpace(txtJobOwnerLoginName?.Text))
-						errors.Add("Job Owner Login Name is required when creating SQL Agent Jobs");
-
-					if (string.IsNullOrWhiteSpace(txtJobScriptsFolder?.Text))
-						errors.Add("Job Scripts Folder is required when creating SQL Agent Jobs");
-					else if (!Directory.Exists(txtJobScriptsFolder.Text.Trim()))
-						errors.Add($"Job Scripts Folder not found: {txtJobScriptsFolder.Text}");
-				}
-
-				// Synonyms validation
-				if (chkCreateSynonyms?.Checked == true)
-				{
-					var databases = GetAllDeploymentDatabasesForDisplay();
-
-					var hiveCFMDatabases = databases
-						.Where(db => db.IndexOf("HiveCFMSurvey", StringComparison.OrdinalIgnoreCase) >= 0)
-						.ToList();
-					if (!hiveCFMDatabases.Any())
-					{
-						var continueChoice = MessageBox.Show(
-							"⚠️ Automatic Synonym Detection Warning:\n\n" +
-							"No databases containing 'HiveCFMSurvey' found in deployment targets.\n\n" +
-							"Synonym creation will be skipped during deployment.\n" +
-							"This is normal if your databases use different naming.\n\n" +
-							"Continue deployment anyway?",
-							"No HiveCFMSurvey Databases Found",
-							MessageBoxButtons.YesNo,
-							MessageBoxIcon.Warning);
-
-						if (continueChoice == DialogResult.No)
-						{
-							return false;
-						}
-					}
-					else
-					{
-						// Show what will happen
-						var confirmMessage = $"✅ Automatic Synonym Detection Summary:\n\n" +
-										   $"Found HiveCFMSurvey database(s): {string.Join(", ", hiveCFMDatabases)}\n\n" +
-										   $"The system will:\n" +
-										   $"• Auto-detect the source database (with CFMSurveyUser table)\n" +
-										   $"• Create synonyms in databases that need them\n" +
-										   $"• Skip databases that don't need synonyms\n" +
-										   $"• Show detailed logs during deployment\n\n" +
-										   $"Continue with automatic synonym creation?";
-
-						var confirmChoice = MessageBox.Show(confirmMessage,
-							"Confirm Automatic Synonym Creation",
-							MessageBoxButtons.YesNo,
-							MessageBoxIcon.Question);
-
-						if (confirmChoice == DialogResult.No)
-						{
-							return false;
-						}
-					}
-				}
-
-				// ENHANCED: Smart Procedures validation with auto-generated awareness
-				if (chkExecuteProcedures?.Checked == true)
-				{
-					if (_currentConfig?.SmartProcedures?.Any() != true)
-					{
-						// Provide helpful guidance instead of hard error
-						var addProceduresChoice = MessageBox.Show(
-							"No procedures configured for execution.\n\n" +
-							"Would you like to:\n" +
-							"• Yes: Continue deployment without procedures\n" +
-							"• No: Configure procedures first\n" +
-							"• Cancel: Abort deployment",
-							"No Procedures Configured",
-							MessageBoxButtons.YesNoCancel,
-							MessageBoxIcon.Question);
-
-						switch (addProceduresChoice)
-						{
-							case DialogResult.Yes:
-								// User wants to continue without procedures
-								chkExecuteProcedures.Checked = false;
-								_logService.LogInfo("User chose to continue deployment without procedures");
-								break;
-							case DialogResult.No:
-								// User wants to configure procedures
-								errors.Add("Please configure procedures using 'Configure Smart Procedures' button");
-								break;
-							case DialogResult.Cancel:
-								// User wants to abort
-								return false;
-						}
-					}
-					else
-					{
-						try
-						{
-							var smartErrors = await ValidateSmartProceduresAsync();
-							if (smartErrors?.Any() == true)
-							{
-								// Filter out auto-generated procedure warnings
-								var criticalErrors = smartErrors.Where(e =>
-									!IsAutoGeneratedProcedureError(e)).ToList();
-
-								if (criticalErrors.Any())
-								{
-									errors.AddRange(criticalErrors);
-								}
-								else if (smartErrors.Count > criticalErrors.Count)
-								{
-									_logService.LogInfo($"Found {smartErrors.Count - criticalErrors.Count} auto-generated procedure references (will be handled automatically)");
-								}
-							}
-						}
-						catch (Exception ex)
-						{
-							errors.Add($"Smart procedures validation failed: {ex.Message}");
-							_logService?.LogError("Smart procedures validation error", ex);
-						}
-					}
-				}
-
-				// Multiple databases validation
-				var chkMultipleDatabases = FindControlByName("chkEnableMultipleDatabases") as CheckBox;
-				if (chkMultipleDatabases?.Checked == true)
-				{
-					var cboDatabases2 = FindControlByName("cboDatabases2") as ComboBox;
-					if (string.IsNullOrWhiteSpace(cboDatabases2?.Text))
-					{
-						errors.Add("Secondary database must be selected when multiple databases is enabled");
-					}
-
-					var txtDacpacPath2 = FindControlByName("txtDacpacPath2") as TextBox;
-					if (!string.IsNullOrWhiteSpace(txtDacpacPath2?.Text) && !File.Exists(txtDacpacPath2.Text.Trim()))
-					{
-						errors.Add($"Secondary DACPAC file not found: {txtDacpacPath2.Text}");
-					}
-				}
-
-				if (errors.Any())
-				{
-					string errorMessage = "Please fix the following issues:\n\n" +
-										string.Join("\n", errors.Select((e, i) => $"{i + 1}. {e}"));
-					MessageBox.Show(errorMessage, "Validation Errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-					return false;
-				}
-
-				return true;
 			}
 			catch (Exception ex)
 			{
-				_logService?.LogError("Configuration validation failed", ex);
-				MessageBox.Show($"Validation failed: {ex.Message}", "Validation Error",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return false;
+				_logService?.LogError($"Error setting visibility for control {controlName}", ex);
+			}
+		}
+		private void SafeClearSynonymTargets()
+		{
+			try
+			{
+				var clbSynonymTargets = FindControlByName("clbSynonymTargets") as CheckedListBox;
+				if (clbSynonymTargets != null)
+				{
+					clbSynonymTargets.Items.Clear();
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error clearing synonym targets", ex);
 			}
 		}
 
+		// HELPER METHOD: Safely populate synonym target databases
+		private async Task SafePopulateSynonymTargetDatabases()
+		{
+			try
+			{
+				await PopulateSynonymTargetDatabasesSafe();
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error populating synonym databases", ex);
+
+				// Update UI to show error state
+				var clbSynonymTargets = FindControlByName("clbSynonymTargets") as CheckedListBox;
+				if (clbSynonymTargets != null)
+				{
+					clbSynonymTargets.Items.Clear();
+					clbSynonymTargets.Items.Add($"Error loading databases: {ex.Message}");
+				}
+			}
+		}
+		private void AddSynonymTooltips()
+		{
+			try
+			{
+				if (toolTip == null) return;
+
+				if (lblSynonymSourceInfo != null)
+				{
+					toolTip.SetToolTip(lblSynonymSourceInfo,
+						"The system will automatically find databases containing 'HiveCFMSurvey' as the source.\n" +
+						"These databases contain the actual CFMSurveyUser table.");
+				}
+
+				if (clbSynonymTargets != null)
+				{
+					toolTip.SetToolTip(clbSynonymTargets,
+						"Select which databases should receive CFMSurveyUser synonyms.\n" +
+						"Typically: HiveCFMApp databases get synonyms, HiveCFMSurvey databases don't.\n" +
+						"Check/uncheck items to customize your selection.");
+				}
+
+				if (btnAutoDetectTargets != null)
+				{
+					toolTip.SetToolTip(btnAutoDetectTargets,
+						"Automatically detect and select HiveCFMApp databases as synonym targets");
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error adding synonym tooltips", ex);
+			}
+		}
 		private void CreateSynonymInfoLabel()
 		{
 			try
@@ -3944,7 +3639,7 @@ namespace DacpacPublisher
 			try
 			{
 				// Create controls if they don't exist
-				if (lstSynonymTargetDatabases == null)
+				if (clbSynonymTargets == null)
 				{
 					CreateSynonymTargetControls();
 				}
@@ -3952,8 +3647,8 @@ namespace DacpacPublisher
 				// Show/hide the controls
 				chkShowSynonymTargets.Visible = show;
 				lblSynonymTargets.Visible = show;
-				lstSynonymTargetDatabases.Visible = show;
-				btnRefreshSynonymTargets.Visible = show;
+				clbSynonymTargets.Visible = show;
+				btnAutoDetectTargets.Visible = show;
 
 				if (show)
 				{
@@ -3987,9 +3682,9 @@ namespace DacpacPublisher
 				};
 
 				// Create target databases list
-				lstSynonymTargetDatabases = new ListBox
+				clbSynonymTargets = new CheckedListBox()
 				{
-					Name = "lstSynonymTargetDatabases",
+					Name = "clbSynonymTargets",
 					SelectionMode = SelectionMode.MultiExtended,
 					Height = 80,
 					Width = 300,
@@ -3998,9 +3693,9 @@ namespace DacpacPublisher
 				};
 
 				// Create refresh button
-				btnRefreshSynonymTargets = new Button
+				btnAutoDetectTargets = new Button
 				{
-					Name = "btnRefreshSynonymTargets",
+					Name = "btnAutoDetectTargets",
 					Text = "🔄 Refresh",
 					Width = 80,
 					Height = 25,
@@ -4018,30 +3713,30 @@ namespace DacpacPublisher
 				};
 
 				// Add event handlers
-				btnRefreshSynonymTargets.Click += async (s, e) => await LoadSynonymTargetDatabasesAsync();
+				btnAutoDetectTargets.Click += async (s, e) => await LoadSynonymTargetDatabasesAsync();
 				chkShowSynonymTargets.CheckedChanged += (s, e) =>
 				{
 					bool showList = chkShowSynonymTargets.Checked;
 					lblSynonymTargets.Visible = showList;
-					lstSynonymTargetDatabases.Visible = showList;
-					btnRefreshSynonymTargets.Visible = showList;
+					clbSynonymTargets.Visible = showList;
+					btnAutoDetectTargets.Visible = showList;
 				};
 
 				// Add to synonyms group
 				synonymGroup.Controls.Add(chkShowSynonymTargets);
 				synonymGroup.Controls.Add(lblSynonymTargets);
-				synonymGroup.Controls.Add(lstSynonymTargetDatabases);
-				synonymGroup.Controls.Add(btnRefreshSynonymTargets);
+				synonymGroup.Controls.Add(clbSynonymTargets);
+				synonymGroup.Controls.Add(btnAutoDetectTargets);
 
 				// Add tooltips
 				if (toolTip != null)
 				{
-					toolTip.SetToolTip(lstSynonymTargetDatabases,
+					toolTip.SetToolTip(clbSynonymTargets,
 						"Select which databases should receive CFMSurveyUser synonyms.\n" +
 						"Typically: HiveCFMApp databases get synonyms, HiveCFMSurvey databases don't.\n" +
 						"Hold Ctrl to select multiple databases.");
 
-					toolTip.SetToolTip(btnRefreshSynonymTargets,
+					toolTip.SetToolTip(btnAutoDetectTargets,
 						"Refresh the list of available databases for synonym creation");
 				}
 
@@ -4072,11 +3767,11 @@ namespace DacpacPublisher
 				yOffset += 20;
 
 				// Position list box and refresh button side by side
-				lstSynonymTargetDatabases.Location = new Point(10, yOffset);
-				btnRefreshSynonymTargets.Location = new Point(320, yOffset);
+				clbSynonymTargets.Location = new Point(10, yOffset);
+				btnAutoDetectTargets.Location = new Point(320, yOffset);
 
 				// Expand group box height if needed
-				int requiredHeight = yOffset + lstSynonymTargetDatabases.Height + 20;
+				int requiredHeight = yOffset + clbSynonymTargets.Height + 20;
 				if (synonymGroup.Height < requiredHeight)
 				{
 					synonymGroup.Height = requiredHeight;
@@ -4093,7 +3788,7 @@ namespace DacpacPublisher
 		{
 			try
 			{
-				if (lstSynonymTargetDatabases == null) return;
+				if (clbSynonymTargets == null) return;
 
 				_logService.LogInfo("🔄 Loading databases for synonym targeting...");
 
@@ -4104,15 +3799,15 @@ namespace DacpacPublisher
 				bool canConnect = await _connectionService.TestConnectionAsync(connectionInfo);
 				if (!canConnect)
 				{
-					lstSynonymTargetDatabases.Items.Clear();
-					lstSynonymTargetDatabases.Items.Add("❌ Cannot connect to server");
+					clbSynonymTargets.Items.Clear();
+					clbSynonymTargets.Items.Add("❌ Cannot connect to server");
 					return;
 				}
 
 				// Get all databases
 				var allDatabases = await _connectionService.GetDatabasesAsync(connectionInfo);
 
-				lstSynonymTargetDatabases.Items.Clear();
+				clbSynonymTargets.Items.Clear();
 
 				// Categorize databases for better user understanding
 				var hiveCFMAppDatabases = new List<string>();
@@ -4138,28 +3833,28 @@ namespace DacpacPublisher
 				// Add databases with visual indicators
 				if (hiveCFMAppDatabases.Any())
 				{
-					lstSynonymTargetDatabases.Items.Add("🎯 RECOMMENDED (HiveCFMApp databases):");
+					clbSynonymTargets.Items.Add("🎯 RECOMMENDED (HiveCFMApp databases):");
 					foreach (var db in hiveCFMAppDatabases)
 					{
-						lstSynonymTargetDatabases.Items.Add($"  ✅ {db}");
+						clbSynonymTargets.Items.Add($"  ✅ {db}");
 					}
 				}
 
 				if (hiveCFMSurveyDatabases.Any())
 				{
-					lstSynonymTargetDatabases.Items.Add("⚠️ SOURCE CANDIDATES (HiveCFMSurvey - usually don't need synonyms):");
+					clbSynonymTargets.Items.Add("⚠️ SOURCE CANDIDATES (HiveCFMSurvey - usually don't need synonyms):");
 					foreach (var db in hiveCFMSurveyDatabases)
 					{
-						lstSynonymTargetDatabases.Items.Add($"  📋 {db}");
+						clbSynonymTargets.Items.Add($"  📋 {db}");
 					}
 				}
 
 				if (otherDatabases.Any())
 				{
-					lstSynonymTargetDatabases.Items.Add("📁 OTHER CFM DATABASES:");
+					clbSynonymTargets.Items.Add("📁 OTHER CFM DATABASES:");
 					foreach (var db in otherDatabases)
 					{
-						lstSynonymTargetDatabases.Items.Add($"  📁 {db}");
+						clbSynonymTargets.Items.Add($"  📁 {db}");
 					}
 				}
 
@@ -4171,10 +3866,10 @@ namespace DacpacPublisher
 			catch (Exception ex)
 			{
 				_logService.LogError("Error loading synonym target databases", ex);
-				if (lstSynonymTargetDatabases != null)
+				if (clbSynonymTargets != null)
 				{
-					lstSynonymTargetDatabases.Items.Clear();
-					lstSynonymTargetDatabases.Items.Add($"❌ Error: {ex.Message}");
+					clbSynonymTargets.Items.Clear();
+					clbSynonymTargets.Items.Add($"❌ Error: {ex.Message}");
 				}
 			}
 		}
@@ -4188,9 +3883,9 @@ namespace DacpacPublisher
 
 			try
 			{
-				if (lstSynonymTargetDatabases?.SelectedItems != null)
+				if (clbSynonymTargets?.SelectedItems != null)
 				{
-					foreach (var item in lstSynonymTargetDatabases.SelectedItems)
+					foreach (var item in clbSynonymTargets.SelectedItems)
 					{
 						var itemText = item.ToString();
 
@@ -4218,10 +3913,10 @@ namespace DacpacPublisher
 		{
 			try
 			{
-				if (lstSynonymTargetDatabases != null)
+				if (clbSynonymTargets != null)
 				{
-					lstSynonymTargetDatabases.Items.Clear();
-					lstSynonymTargetDatabases.ClearSelected();
+					clbSynonymTargets.Items.Clear();
+					clbSynonymTargets.ClearSelected();
 				}
 				_logService.LogInfo("🧹 Cleared synonym target selection");
 			}
@@ -4396,5 +4091,656 @@ namespace DacpacPublisher
 				}
 			}
 		}
+
+		#region Enhanced Helper Methods
+
+		private void AnimatePanel(Panel panel, bool show)
+		{
+			try
+			{
+				if (panel == null) return;
+
+				if (show)
+				{
+					panel.Visible = true;
+					// Simple fade-in effect by adjusting opacity-like appearance
+					panel.BackColor = Color.FromArgb(240, panel.BackColor);
+
+					var timer = new Timer();
+					timer.Interval = 50;
+					timer.Tick += (s, e) =>
+					{
+						var currentAlpha = panel.BackColor.A;
+						if (currentAlpha < 248)
+						{
+							panel.BackColor = Color.FromArgb(Math.Min(255, currentAlpha + 15),
+								panel.BackColor.R, panel.BackColor.G, panel.BackColor.B);
+						}
+						else
+						{
+							timer.Stop();
+							timer.Dispose();
+						}
+					};
+					timer.Start();
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error animating panel", ex);
+			}
+		}
+
+
+		private void UpdateJobValidationUI(string message, bool isValid, int jobCount)
+		{
+			if (InvokeRequired)
+			{
+				Invoke(new Action(() => UpdateJobValidationUI(message, isValid, jobCount)));
+				return;
+			}
+
+			try
+			{
+				if (pnlJobValidation != null)
+				{
+					pnlJobValidation.Visible = !string.IsNullOrEmpty(txtJobScriptsFolder?.Text?.Trim());
+
+					if (isValid && jobCount > 0)
+					{
+						pnlJobValidation.BackColor = Color.FromArgb(232, 245, 233);
+					}
+					else
+					{
+						pnlJobValidation.BackColor = Color.FromArgb(248, 215, 218);
+					}
+				}
+
+				if (lblJobValidationResults != null)
+				{
+					lblJobValidationResults.Text = message;
+					lblJobValidationResults.ForeColor = isValid ?
+						Color.FromArgb(46, 125, 50) : Color.FromArgb(211, 47, 47);
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error updating job validation UI", ex);
+			}
+		}
+
+		private void UpdateJobScriptsList(List<string> jobNames)
+		{
+			if (InvokeRequired)
+			{
+				Invoke(new Action(() => UpdateJobScriptsList(jobNames)));
+				return;
+			}
+
+			try
+			{
+				if (lstJobScripts != null)
+				{
+					lstJobScripts.Items.Clear();
+					foreach (var jobName in jobNames.Take(5)) // Show first 5
+					{
+						lstJobScripts.Items.Add($"📄 {jobName}");
+					}
+
+					if (jobNames.Count > 5)
+					{
+						lstJobScripts.Items.Add($"... and {jobNames.Count - 5} more");
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Error updating job scripts list", ex);
+			}
+		}
+
+		#endregion
+
+
+
+		#region Helper Methods (Preserved and Enhanced)
+
+		private async Task RefreshDatabasesAsync()
+		{
+			try
+			{
+				UpdateConfigurationFromUI();
+				var connectionInfo = CreateConnectionInfo(_currentConfig);
+
+				toolStripStatusLabel.Text = "Refreshing databases...";
+				toolStripProgressBar.Visible = true;
+
+				var databases = await _connectionService.GetDatabasesAsync(connectionInfo);
+
+				string currentSelection = cboDatabases.SelectedItem?.ToString();
+				cboDatabases.Items.Clear();
+
+				foreach (string db in databases)
+				{
+					cboDatabases.Items.Add(db);
+				}
+
+				if (!string.IsNullOrEmpty(currentSelection) && cboDatabases.Items.Contains(currentSelection))
+				{
+					cboDatabases.SelectedItem = currentSelection;
+				}
+				else if (cboDatabases.Items.Count > 0)
+				{
+					cboDatabases.SelectedIndex = 0;
+				}
+
+				_logService.LogInfo($"Refreshed {databases.Count} databases");
+			}
+			catch (Exception ex)
+			{
+				_logService.LogError("Failed to refresh databases", ex);
+				MessageBox.Show($"❌ Failed to refresh databases: {ex.Message}", "Error",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			finally
+			{
+				toolStripStatusLabel.Text = "Ready";
+				toolStripProgressBar.Visible = false;
+			}
+		}
+
+		private async Task RefreshDatabases2Async()
+		{
+			try
+			{
+				UpdateConfigurationFromUI();
+				var connectionInfo = CreateConnectionInfo(_currentConfig);
+
+				toolStripStatusLabel.Text = "Refreshing databases for target 2...";
+				toolStripProgressBar.Visible = true;
+
+				var databases = await _connectionService.GetDatabasesAsync(connectionInfo);
+
+				string currentSelection = cboDatabases2.SelectedItem?.ToString();
+				cboDatabases2.Items.Clear();
+
+				foreach (string db in databases)
+				{
+					cboDatabases2.Items.Add(db);
+				}
+
+				if (!string.IsNullOrEmpty(currentSelection) && cboDatabases2.Items.Contains(currentSelection))
+				{
+					cboDatabases2.SelectedItem = currentSelection;
+				}
+				else if (cboDatabases2.Items.Count > 0)
+				{
+					cboDatabases2.SelectedIndex = 0;
+				}
+			}
+			catch (Exception ex)
+			{
+				_logService.LogError("Failed to refresh databases for target 2", ex);
+				MessageBox.Show($"Failed to refresh databases: {ex.Message}", "Error",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			finally
+			{
+				toolStripStatusLabel.Text = "Ready";
+				toolStripProgressBar.Visible = false;
+			}
+		}
+
+		private void UpdateSmartProcedureStatus()
+		{
+			if (lblSmartProcedureStatus == null) return;
+
+			try
+			{
+				if (_currentConfig.SmartProcedures?.Any() == true)
+				{
+					var count = _currentConfig.SmartProcedures.Count;
+					var db1Count = _currentConfig.SmartProcedures.Count(p => p.ExecuteOnDatabase1);
+					var db2Count = _currentConfig.SmartProcedures.Count(p => p.ExecuteOnDatabase2);
+
+					lblSmartProcedureStatus.Text = $"✅ {count} procedures configured (Primary: {db1Count}, Secondary: {db2Count})";
+					lblSmartProcedureStatus.ForeColor = Color.Green;
+				}
+				else
+				{
+					lblSmartProcedureStatus.Text = "⚙️ Click 'Configure Smart Procedures' to get started";
+					lblSmartProcedureStatus.ForeColor = Color.Gray;
+				}
+			}
+			catch (Exception ex)
+			{
+				lblSmartProcedureStatus.Text = $"❌ Error: {ex.Message}";
+				lblSmartProcedureStatus.ForeColor = Color.Red;
+			}
+		}
+
+		private void UpdateConfigurationFromUI()
+		{
+			try
+			{
+				if (_currentConfig == null)
+					_currentConfig = new PublisherConfiguration();
+
+				// Basic connection settings
+				_currentConfig.ServerName = txtServerName?.Text?.Trim() ?? string.Empty;
+				_currentConfig.WindowsAuth = chkWindowsAuth?.Checked ?? false;
+				_currentConfig.Username = txtUsername?.Text?.Trim() ?? string.Empty;
+				_currentConfig.Password = txtPassword?.Text ?? string.Empty;
+				_currentConfig.Database = cboDatabases?.SelectedItem?.ToString()?.Trim() ?? string.Empty;
+				_currentConfig.DacpacPath = txtDacpacPath?.Text?.Trim() ?? string.Empty;
+
+				// Feature settings
+				_currentConfig.CreateSynonyms = chkCreateSynonyms?.Checked ?? false;
+				_currentConfig.CreateSqlAgentJobs = chkCreateSqlAgentJobs?.Checked ?? false;
+				_currentConfig.ExecuteProcedures = chkExecuteProcedures?.Checked ?? false;
+				_currentConfig.CreateBackupBeforeDeployment = chkCreateBackup?.Checked ?? false;
+
+				// Job settings
+				if (_currentConfig.CreateSqlAgentJobs)
+				{
+					_currentConfig.JobOwnerLoginName = txtJobOwnerLoginName?.Text?.Trim() ?? string.Empty;
+					_currentConfig.JobScriptsFolder = txtJobScriptsFolder?.Text?.Trim() ?? string.Empty;
+				}
+
+				_logService?.LogInfo("✅ Configuration updated from UI");
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Failed to update configuration from UI", ex);
+				throw;
+			}
+		}
+
+		private void UpdateUIFromConfiguration()
+		{
+			try
+			{
+				_isInitializing = true;
+
+				// Connection settings
+				if (txtServerName != null) txtServerName.Text = _currentConfig?.ServerName ?? string.Empty;
+				if (chkWindowsAuth != null) chkWindowsAuth.Checked = _currentConfig?.WindowsAuth ?? true;
+				if (txtUsername != null) txtUsername.Text = _currentConfig?.Username ?? string.Empty;
+				if (txtPassword != null) txtPassword.Text = _currentConfig?.Password ?? string.Empty;
+				if (txtDacpacPath != null) txtDacpacPath.Text = _currentConfig?.DacpacPath ?? string.Empty;
+
+				// Feature settings
+				if (chkCreateSynonyms != null) chkCreateSynonyms.Checked = _currentConfig?.CreateSynonyms ?? false;
+				if (chkCreateSqlAgentJobs != null) chkCreateSqlAgentJobs.Checked = _currentConfig?.CreateSqlAgentJobs ?? false;
+				if (chkExecuteProcedures != null) chkExecuteProcedures.Checked = _currentConfig?.ExecuteProcedures ?? false;
+				if (chkCreateBackup != null) chkCreateBackup.Checked = _currentConfig?.CreateBackupBeforeDeployment ?? false;
+
+				// Job settings
+				if (txtJobOwnerLoginName != null) txtJobOwnerLoginName.Text = _currentConfig?.JobOwnerLoginName ?? string.Empty;
+				if (txtJobScriptsFolder != null) txtJobScriptsFolder.Text = _currentConfig?.JobScriptsFolder ?? string.Empty;
+
+				// Update database dropdown
+				if (cboDatabases != null && _currentConfig != null && !string.IsNullOrEmpty(_currentConfig.Database))
+				{
+					if (!cboDatabases.Items.Contains(_currentConfig.Database))
+						cboDatabases.Items.Add(_currentConfig.Database);
+					cboDatabases.SelectedItem = _currentConfig.Database;
+				}
+
+				// Update control states
+				UpdateAuthenticationControls();
+
+				if (_logService != null)
+					_logService.LogInfo("✅ UI updated from configuration");
+			}
+			catch (Exception ex)
+			{
+				if (_logService != null)
+					_logService.LogError("Failed to update UI from configuration", ex);
+				ShowWarningMessage("⚠️ Some settings could not be restored: " + ex.Message,
+					"Configuration Load Warning");
+			}
+			finally
+			{
+				_isInitializing = false;
+			}
+		}
+
+		private ConnectionInfo CreateConnectionInfo(PublisherConfiguration config)
+		{
+			return new ConnectionInfo
+			{
+				ServerName = config?.ServerName ?? string.Empty,
+				WindowsAuth = config?.WindowsAuth ?? true,
+				Username = config?.Username ?? string.Empty,
+				Password = config?.Password ?? string.Empty,
+				Database = config?.Database ?? "master"
+			};
+		}
+
+		private void UpdateAuthenticationControls()
+		{
+			try
+			{
+				var useWindowsAuth = chkWindowsAuth?.Checked ?? true;
+
+				if (lblUsername != null) lblUsername.Enabled = !useWindowsAuth;
+				if (txtUsername != null) txtUsername.Enabled = !useWindowsAuth;
+				if (lblPassword != null) lblPassword.Enabled = !useWindowsAuth;
+				if (txtPassword != null) txtPassword.Enabled = !useWindowsAuth;
+
+				if (useWindowsAuth)
+				{
+					if (txtUsername != null) txtUsername.Clear();
+					if (txtPassword != null) txtPassword.Clear();
+				}
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Auth controls update error: {ex.Message}");
+			}
+		}
+
+		private void UpdateStatusUI(string status)
+		{
+			if (InvokeRequired)
+			{
+				Invoke(new Action(() => UpdateStatusUI(status)));
+				return;
+			}
+
+			toolStripStatusLabel.Text = status;
+		}
+
+		private void UpdateStatus(string message, bool showProgress)
+		{
+			if (IsInDesignMode) return;
+			try
+			{
+				if (InvokeRequired)
+				{
+					Invoke(new Action(() => UpdateStatus(message, showProgress)));
+					return;
+				}
+
+				if (toolStripStatusLabel != null)
+					toolStripStatusLabel.Text = showProgress ? $"⏳ {message}" : $"🟢 {message}";
+
+				if (toolStripProgressBar != null)
+				{
+					toolStripProgressBar.Visible = showProgress;
+					if (showProgress)
+						toolStripProgressBar.Style = ProgressBarStyle.Marquee;
+				}
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Status update error: {ex.Message}");
+			}
+		}
+
+		private async Task ExecuteWithErrorHandling(string operation, Func<Task> action, Action finallyAction = null)
+		{
+			try
+			{
+				await action();
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError($"{operation} failed", ex);
+				HandleError(operation, ex);
+			}
+			finally
+			{
+				finallyAction?.Invoke();
+			}
+		}
+
+		private void HandleError(string context, Exception ex)
+		{
+			var message = $"❌ {context} failed:\n\n{ex.Message}";
+			MessageBox.Show(message, $"{context} Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
+
+		private void ShowSuccessMessage(string message, string title)
+		{
+			MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+		}
+
+		private void ShowWarningMessage(string message, string title)
+		{
+			MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+		}
+
+		private void OnLogMessageReceived(string message)
+		{
+			if (InvokeRequired)
+			{
+				Invoke(new Action<string>(OnLogMessageReceived), message);
+				return;
+			}
+
+			txtLog.AppendText($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
+			txtLog.ScrollToCaret();
+		}
+
+		private void OnProgressChanged(int progress)
+		{
+			if (InvokeRequired)
+			{
+				Invoke(new Action<int>(OnProgressChanged), progress);
+				return;
+			}
+
+			if (toolStripProgressBar.Style == ProgressBarStyle.Blocks)
+			{
+				toolStripProgressBar.Value = Math.Min(progress, 100);
+			}
+		}
+
+		#endregion
+
+		#region Deployment Methods (Simplified)
+
+		private async Task ExecuteDeploymentAsync()
+		{
+			await ExecuteWithErrorHandling("Deployment", async () =>
+			{
+				UpdateConfigurationFromUI();
+
+				var isValid = await ValidateConfigurationAsync().ConfigureAwait(false);
+				if (!isValid)
+					return;
+
+				var shouldContinue = false;
+				Invoke(new Action(() => shouldContinue = ConfirmDeployment()));
+				if (!shouldContinue)
+					return;
+
+				Invoke(new Action(() => btnPublish.Enabled = false));
+				UpdateStatus("Deploying...", true);
+
+				if (tabControl?.TabPages != null)
+				{
+					Invoke(new Action(() =>
+					{
+						foreach (TabPage tab in tabControl.TabPages)
+						{
+							if (tab.Text.Contains("Log"))
+							{
+								tabControl.SelectedTab = tab;
+								break;
+							}
+						}
+					}));
+				}
+
+				var result = await _deploymentService.DeployDacpacAsync(_currentConfig).ConfigureAwait(false);
+
+				Invoke(new Action(() => ProcessDeploymentResult(result)));
+			},
+				() =>
+				{
+					Invoke(new Action(() => btnPublish.Enabled = true));
+					UpdateStatus("Ready", false);
+				});
+		}
+
+		private bool ConfirmDeployment()
+		{
+			try
+			{
+				var summary = "🚀 Ready to deploy!\n\n" +
+							 "Server: " + (_currentConfig?.ServerName ?? "") + "\n" +
+							 "Database: " + (_currentConfig?.Database ?? "") + "\n" +
+							 "DACPAC: " + (_currentConfig?.DacpacPath != null ? Path.GetFileName(_currentConfig.DacpacPath) : "") + "\n\n" +
+							 "Proceed with deployment?";
+
+				return MessageBox.Show(summary, "Confirm Deployment",
+					MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+			}
+			catch (Exception ex)
+			{
+				if (_logService != null)
+					_logService.LogError("Error in deployment confirmation", ex);
+				return false;
+			}
+		}
+
+		private void ProcessDeploymentResult(DeploymentResult result)
+		{
+			try
+			{
+				if (result != null && result.Success)
+				{
+					ShowSuccessMessage(BuildSuccessMessage(result), "🚀 Deployment Successful");
+					if (_logService != null)
+						_logService.LogInfo("✅ " + result.GetSummary());
+				}
+				else
+				{
+					MessageBox.Show(BuildFailureMessage(result), "💥 Deployment Failed",
+						MessageBoxButtons.OK, MessageBoxIcon.Error);
+					if (_logService != null)
+						_logService.LogError("❌ " + (result?.GetSummary() ?? "Unknown error"));
+				}
+			}
+			catch (Exception ex)
+			{
+				if (_logService != null)
+					_logService.LogError("Error processing deployment result", ex);
+				MessageBox.Show("Error processing deployment result: " + ex.Message, "Processing Error",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private string BuildSuccessMessage(DeploymentResult result)
+		{
+			try
+			{
+				var message = new StringBuilder();
+				message.AppendLine("🎉 Deployment Completed Successfully!");
+				message.AppendLine();
+				message.AppendLine("✅ Database: " + (_currentConfig?.Database ?? ""));
+				message.AppendLine("✅ Server: " + (_currentConfig?.ServerName ?? ""));
+				message.AppendLine("⏱️ Duration: " + (result?.Duration.ToString(@"mm\:ss") ?? ""));
+
+				if (result?.ProceduresExecuted > 0)
+					message.AppendLine("🔧 Procedures Executed: " + result.ProceduresExecuted);
+
+				if (result?.JobsCreated > 0)
+					message.AppendLine("⚙️ Jobs Created: " + result.JobsCreated);
+
+				if (result != null && !string.IsNullOrEmpty(result.BackupPath))
+					message.AppendLine("💾 Backup: " + Path.GetFileName(result.BackupPath));
+
+				return message.ToString();
+			}
+			catch (Exception ex)
+			{
+				return "Deployment completed successfully. Duration: " + (result?.Duration.ToString(@"mm\:ss") ?? "");
+			}
+		}
+
+		private string BuildFailureMessage(DeploymentResult result)
+		{
+			try
+			{
+				var message = new StringBuilder();
+				message.AppendLine("❌ Deployment Failed: " + (result?.Message ?? ""));
+				message.AppendLine();
+				message.AppendLine("🔧 RECOMMENDED ACTIONS:");
+				message.AppendLine("  1. Check the log for detailed error information");
+				message.AppendLine("  2. Verify database permissions");
+				message.AppendLine("  3. Ensure DACPAC file is valid");
+				message.AppendLine("  4. Check SQL Server connectivity");
+
+				return message.ToString();
+			}
+			catch (Exception ex)
+			{
+				return "Deployment failed: " + (result?.Message ?? "Unknown error");
+			}
+		}
+
+		private async Task<bool> ValidateConfigurationAsync()
+		{
+			var errors = new List<string>();
+
+			try
+			{
+				// Basic validation with null checks
+				if (string.IsNullOrWhiteSpace(txtServerName?.Text))
+					errors.Add("Server Name is required");
+
+				if (string.IsNullOrWhiteSpace(cboDatabases?.Text))
+					errors.Add("Target Database must be selected");
+
+				if (string.IsNullOrWhiteSpace(txtDacpacPath?.Text))
+					errors.Add("DACPAC file path is required");
+				else if (!File.Exists(txtDacpacPath.Text.Trim()))
+					errors.Add($"DACPAC file not found: {txtDacpacPath.Text}");
+
+				// Authentication validation
+				if (!(chkWindowsAuth?.Checked ?? false))
+				{
+					if (string.IsNullOrWhiteSpace(txtUsername?.Text))
+						errors.Add("Username is required for SQL authentication");
+					if (string.IsNullOrWhiteSpace(txtPassword?.Text))
+						errors.Add("Password is required for SQL authentication");
+				}
+
+				// SQL Agent Jobs validation
+				if (chkCreateSqlAgentJobs?.Checked == true)
+				{
+					if (string.IsNullOrWhiteSpace(txtJobOwnerLoginName?.Text))
+						errors.Add("Job Owner Login Name is required when creating SQL Agent Jobs");
+
+					if (string.IsNullOrWhiteSpace(txtJobScriptsFolder?.Text))
+						errors.Add("Job Scripts Folder is required when creating SQL Agent Jobs");
+					else if (!Directory.Exists(txtJobScriptsFolder.Text.Trim()))
+						errors.Add($"Job Scripts Folder not found: {txtJobScriptsFolder.Text}");
+				}
+
+				if (errors.Any())
+				{
+					string errorMessage = "Please fix the following issues:\n\n" +
+										string.Join("\n", errors.Select((e, i) => $"{i + 1}. {e}"));
+					MessageBox.Show(errorMessage, "Validation Errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return false;
+				}
+
+				return true;
+			}
+			catch (Exception ex)
+			{
+				_logService?.LogError("Configuration validation failed", ex);
+				MessageBox.Show($"Validation failed: {ex.Message}", "Validation Error",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return false;
+			}
+		}
+
+		#endregion
 	}
 }

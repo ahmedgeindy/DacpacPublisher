@@ -1,10 +1,10 @@
-﻿using DacpacPublisher.Data_Models;
-using DacpacPublisher.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Threading.Tasks;
+using DacpacPublisher.Data_Models;
+using DacpacPublisher.Interfaces;
 
 namespace DacpacPublisher.Services
 {
