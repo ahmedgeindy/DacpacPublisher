@@ -9,88 +9,88 @@ namespace DacpacPublisher
 		private System.ComponentModel.IContainer components = null;
 
 		// Declare ALL controls as class fields
-		private PictureBox logoPictureBox;
-		private Label headerTitleLabel;
-		private Label headerSubtitleLabel;
-		private Panel headerPanel;
-		private GroupBox grpConnection;
-		private Button btnTestConnection;
-		private TextBox txtPassword;
-		private TextBox txtUsername;
-		private Label lblPassword;
-		private Label lblUsername;
-		private CheckBox chkWindowsAuth;
-		private ComboBox cboDatabases;
-		private Button btnRefreshDatabases;
-		private Label lblDatabase;
-		private TextBox txtServerName;
-		private Label lblServerName;
-		private CheckBox chkEnableMultipleDatabases;
-		private Label lblDatabase2;
-		private ComboBox cboDatabases2;
-		private Button btnRefreshDatabases2;
-		private Label lblDacpacPath2;
-		private TextBox txtDacpacPath2;
-		private Button btnBrowseDacpac2;
-		private OpenFileDialog openDacpacDialog2;
-		private GroupBox grpDacPac;
-		private Button btnBrowseDacpac;
-		private TextBox txtDacpacPath;
-		private Label lblDacpacPath;
-		private GroupBox grpSynonyms;
-		private TextBox txtSynonymSourceDb;
-		private Label lblSynonymSourceDb;
-		private CheckBox chkCreateSynonyms;
-		private CheckedListBox clbSynonymTargets;
-		private Label lblSynonymTargets;
-		private Button btnAutoDetectTargets;
-		private Label lblSynonymSourceInfo;
-		private CheckBox chkShowSynonymTargets;
-		private Panel pnlSynonymConfig;
-		private GroupBox grpSQLAgentJobs;
-		private Label lblJobDescriptions;
-		private TextBox txtJobOwnerLoginName;
-		private Label lblJobOwnerLoginName;
-		private CheckBox chkCreateSqlAgentJobs;
-		private TextBox txtJobScriptsFolder;
-		private Label lblJobScriptsFolder;
-		private Button btnBrowseJobScripts;
-		private Panel pnlJobConfig;
-		private Label lblJobValidationResults;
-		private Panel pnlJobValidation;
-		private ListView lstJobScripts;
-		private GroupBox grpSmartProcedures;
-		private CheckBox chkExecuteProcedures;
-		private Button btnConfigureSmartProcedures;
-		private Label lblSmartProcedureStatus;
-		private CheckBox chkCreateBackup;
-		private Button btnPublish;
-		private Button btnSaveConfig;
-		private Button btnLoadConfig;
-		private StatusStrip statusStrip;
-		private ToolStripProgressBar toolStripProgressBar;
-		private ToolStripStatusLabel toolStripStatusLabel;
-		private TabControl tabControl;
-		private TabPage tabSetup;
-		private TabPage tabLog;
-		private TextBox txtLog;
-		private TabPage tabDataViewer;
-		private DataGridView dgvTableData;
-		private ComboBox cboTables;
-		private Button btnRefreshTables;
-		private Button btnQueryTable;
-		private TextBox txtCustomQuery;
-		private Panel pnlRecommendations;
-		private RichTextBox rtbRecommendations;
-		private Label lblTableCount;
-		private Label lblRowCount;
-		private ProgressBar progressQuery;
-		private ToolTip toolTip;
-		private OpenFileDialog openDacpacDialog;
-		private OpenFileDialog openConfigDialog;
-		private SaveFileDialog saveConfigDialog;
-		private FolderBrowserDialog folderBrowserDialog;
-		private SaveFileDialog saveLogDialog;
+		public PictureBox logoPictureBox;
+		public Label headerTitleLabel;
+		public Label headerSubtitleLabel;
+		public Panel headerPanel;
+		public GroupBox grpConnection;
+		public Button btnTestConnection;
+		public TextBox txtPassword;
+		public TextBox txtUsername;
+		public Label lblPassword;
+		public Label lblUsername;
+		public CheckBox chkWindowsAuth;
+		public ComboBox cboDatabases;
+		public Button btnRefreshDatabases;
+		public Label lblDatabase;
+		public TextBox txtServerName;
+		public Label lblServerName;
+		public CheckBox chkEnableMultipleDatabases;
+		public Label lblDatabase2;
+		public ComboBox cboDatabases2;
+		public Button btnRefreshDatabases2;
+		public Label lblDacpacPath2;
+		public TextBox txtDacpacPath2;
+		public Button btnBrowseDacpac2;
+		public OpenFileDialog openDacpacDialog2;
+		public GroupBox grpDacPac;
+		public Button btnBrowseDacpac;
+		public TextBox txtDacpacPath;
+		public Label lblDacpacPath;
+		public GroupBox grpSynonyms;
+		public CheckBox chkCreateSynonyms;
+
+		public Panel pnlSynonymConfig;
+
+		// SIMPLIFIED: Replace complex controls with simple ones
+		public Label lblSynonymTargetDatabase;
+		public TextBox txtSynonymTargetDatabase;
+		public Button btnAutoDetectTarget;
+		public Label lblSynonymInfo;
+		public GroupBox grpSQLAgentJobs;
+		public Label lblJobDescriptions;
+		public TextBox txtJobOwnerLoginName;
+		public Label lblJobOwnerLoginName;
+		public CheckBox chkCreateSqlAgentJobs;
+		public TextBox txtJobScriptsFolder;
+		public Label lblJobScriptsFolder;
+		public Button btnBrowseJobScripts;
+		public Panel pnlJobConfig;
+		public Label lblJobValidationResults;
+		public Panel pnlJobValidation;
+		public ListView lstJobScripts;
+		public GroupBox grpSmartProcedures;
+		public CheckBox chkExecuteProcedures;
+		public Button btnConfigureSmartProcedures;
+		public Label lblSmartProcedureStatus;
+		public CheckBox chkCreateBackup;
+		public Button btnPublish;
+		public Button btnSaveConfig;
+		public Button btnLoadConfig;
+		public StatusStrip statusStrip;
+		public ToolStripProgressBar toolStripProgressBar;
+		public ToolStripStatusLabel toolStripStatusLabel;
+		public TabControl tabControl;
+		public TabPage tabSetup;
+		public TabPage tabLog;
+		public TextBox txtLog;
+		public TabPage tabDataViewer;
+		public DataGridView dgvTableData;
+		public ComboBox cboTables;
+		public Button btnRefreshTables;
+		public Button btnQueryTable;
+		public TextBox txtCustomQuery;
+		public Panel pnlRecommendations;
+		public RichTextBox rtbRecommendations;
+		public Label lblTableCount;
+		public Label lblRowCount;
+		public ProgressBar progressQuery;
+		public ToolTip toolTip;
+		public OpenFileDialog openDacpacDialog;
+		public OpenFileDialog openConfigDialog;
+		public SaveFileDialog saveConfigDialog;
+		public FolderBrowserDialog folderBrowserDialog;
+		public SaveFileDialog saveLogDialog;
 
 		protected override void Dispose(bool disposing)
 		{
@@ -98,6 +98,7 @@ namespace DacpacPublisher
 			{
 				components.Dispose();
 			}
+
 			base.Dispose(disposing);
 		}
 
@@ -136,13 +137,10 @@ namespace DacpacPublisher
 			this.grpSynonyms = new System.Windows.Forms.GroupBox();
 			this.chkCreateSynonyms = new System.Windows.Forms.CheckBox();
 			this.pnlSynonymConfig = new System.Windows.Forms.Panel();
-			this.lblSynonymSourceInfo = new System.Windows.Forms.Label();
-			this.chkShowSynonymTargets = new System.Windows.Forms.CheckBox();
-			this.lblSynonymTargets = new System.Windows.Forms.Label();
-			this.clbSynonymTargets = new System.Windows.Forms.CheckedListBox();
-			this.btnAutoDetectTargets = new System.Windows.Forms.Button();
-			this.lblSynonymSourceDb = new System.Windows.Forms.Label();
-			this.txtSynonymSourceDb = new System.Windows.Forms.TextBox();
+			this.lblSynonymTargetDatabase = new System.Windows.Forms.Label();
+			this.txtSynonymTargetDatabase = new System.Windows.Forms.TextBox();
+			this.btnAutoDetectTarget = new System.Windows.Forms.Button();
+			this.lblSynonymInfo = new System.Windows.Forms.Label();
 			this.grpSQLAgentJobs = new System.Windows.Forms.GroupBox();
 			this.chkCreateSqlAgentJobs = new System.Windows.Forms.CheckBox();
 			this.pnlJobConfig = new System.Windows.Forms.Panel();
@@ -221,6 +219,7 @@ namespace DacpacPublisher
 			// 
 			this.logoPictureBox.BackColor = System.Drawing.Color.White;
 			this.logoPictureBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.logoPictureBox.Image = global::DacpacPublisher.Properties.Resources.ISTLogo;
 			this.logoPictureBox.Location = new System.Drawing.Point(20, 15);
 			this.logoPictureBox.Name = "logoPictureBox";
 			this.logoPictureBox.Size = new System.Drawing.Size(40, 40);
@@ -416,6 +415,7 @@ namespace DacpacPublisher
 			this.chkEnableMultipleDatabases.TabIndex = 11;
 			this.chkEnableMultipleDatabases.Text = "🗄️ Deploy to Multiple Databases";
 			this.chkEnableMultipleDatabases.UseVisualStyleBackColor = true;
+			this.chkEnableMultipleDatabases.Visible = false;
 			this.chkEnableMultipleDatabases.CheckedChanged += new System.EventHandler(this.chkEnableMultipleDatabases_CheckedChanged);
 			// 
 			// lblDatabase2
@@ -428,6 +428,7 @@ namespace DacpacPublisher
 			this.lblDatabase2.Size = new System.Drawing.Size(145, 20);
 			this.lblDatabase2.TabIndex = 12;
 			this.lblDatabase2.Text = "Secondary Database";
+			this.lblDatabase2.Visible = false;
 			// 
 			// cboDatabases2
 			// 
@@ -440,6 +441,7 @@ namespace DacpacPublisher
 			this.cboDatabases2.Name = "cboDatabases2";
 			this.cboDatabases2.Size = new System.Drawing.Size(180, 28);
 			this.cboDatabases2.TabIndex = 13;
+			this.cboDatabases2.Visible = false;
 			// 
 			// btnRefreshDatabases2
 			// 
@@ -455,6 +457,7 @@ namespace DacpacPublisher
 			this.btnRefreshDatabases2.TabIndex = 14;
 			this.btnRefreshDatabases2.Text = "🔄 Refresh";
 			this.btnRefreshDatabases2.UseVisualStyleBackColor = false;
+			this.btnRefreshDatabases2.Visible = false;
 			this.btnRefreshDatabases2.Click += new System.EventHandler(this.btnRefreshDatabases2_Click);
 			// 
 			// lblDacpacPath2
@@ -467,6 +470,7 @@ namespace DacpacPublisher
 			this.lblDacpacPath2.Size = new System.Drawing.Size(163, 20);
 			this.lblDacpacPath2.TabIndex = 3;
 			this.lblDacpacPath2.Text = "Secondary Package File";
+			this.lblDacpacPath2.Visible = false;
 			// 
 			// txtDacpacPath2
 			// 
@@ -477,6 +481,7 @@ namespace DacpacPublisher
 			this.txtDacpacPath2.Name = "txtDacpacPath2";
 			this.txtDacpacPath2.Size = new System.Drawing.Size(775, 27);
 			this.txtDacpacPath2.TabIndex = 4;
+			this.txtDacpacPath2.Visible = false;
 			// 
 			// btnBrowseDacpac2
 			// 
@@ -492,6 +497,7 @@ namespace DacpacPublisher
 			this.btnBrowseDacpac2.TabIndex = 5;
 			this.btnBrowseDacpac2.Text = "📁 Browse...";
 			this.btnBrowseDacpac2.UseVisualStyleBackColor = false;
+			this.btnBrowseDacpac2.Visible = false;
 			this.btnBrowseDacpac2.Click += new System.EventHandler(this.btnBrowseDacpac2_Click);
 			// 
 			// grpDacPac
@@ -551,13 +557,11 @@ namespace DacpacPublisher
 			this.grpSynonyms.BackColor = System.Drawing.Color.White;
 			this.grpSynonyms.Controls.Add(this.chkCreateSynonyms);
 			this.grpSynonyms.Controls.Add(this.pnlSynonymConfig);
-			this.grpSynonyms.Controls.Add(this.lblSynonymSourceDb);
-			this.grpSynonyms.Controls.Add(this.txtSynonymSourceDb);
 			this.grpSynonyms.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
 			this.grpSynonyms.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(66)))), ((int)(((byte)(66)))));
 			this.grpSynonyms.Location = new System.Drawing.Point(20, 360);
 			this.grpSynonyms.Name = "grpSynonyms";
-			this.grpSynonyms.Size = new System.Drawing.Size(570, 280);
+			this.grpSynonyms.Size = new System.Drawing.Size(570, 180);
 			this.grpSynonyms.TabIndex = 2;
 			this.grpSynonyms.TabStop = false;
 			this.grpSynonyms.Text = "🔗 Database Synonyms";
@@ -578,99 +582,67 @@ namespace DacpacPublisher
 			// 
 			this.pnlSynonymConfig.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
 			this.pnlSynonymConfig.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			this.pnlSynonymConfig.Controls.Add(this.lblSynonymSourceInfo);
-			this.pnlSynonymConfig.Controls.Add(this.chkShowSynonymTargets);
-			this.pnlSynonymConfig.Controls.Add(this.lblSynonymTargets);
-			this.pnlSynonymConfig.Controls.Add(this.clbSynonymTargets);
-			this.pnlSynonymConfig.Controls.Add(this.btnAutoDetectTargets);
+			this.pnlSynonymConfig.Controls.Add(this.lblSynonymTargetDatabase);
+			this.pnlSynonymConfig.Controls.Add(this.txtSynonymTargetDatabase);
+			this.pnlSynonymConfig.Controls.Add(this.btnAutoDetectTarget);
+			this.pnlSynonymConfig.Controls.Add(this.lblSynonymInfo);
 			this.pnlSynonymConfig.Location = new System.Drawing.Point(20, 65);
 			this.pnlSynonymConfig.Name = "pnlSynonymConfig";
-			this.pnlSynonymConfig.Size = new System.Drawing.Size(530, 200);
+			this.pnlSynonymConfig.Size = new System.Drawing.Size(530, 100);
 			this.pnlSynonymConfig.TabIndex = 1;
 			this.pnlSynonymConfig.Visible = false;
 			// 
-			// lblSynonymSourceInfo
+			// lblSynonymTargetDatabase
 			// 
-			this.lblSynonymSourceInfo.AutoSize = true;
-			this.lblSynonymSourceInfo.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Italic);
-			this.lblSynonymSourceInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(125)))), ((int)(((byte)(50)))));
-			this.lblSynonymSourceInfo.Location = new System.Drawing.Point(10, 10);
-			this.lblSynonymSourceInfo.Name = "lblSynonymSourceInfo";
-			this.lblSynonymSourceInfo.Size = new System.Drawing.Size(430, 19);
-			this.lblSynonymSourceInfo.TabIndex = 0;
-			this.lblSynonymSourceInfo.Text = "🤖 Source database will be auto-detected (HiveCFMSurvey pattern)";
+			this.lblSynonymTargetDatabase.AutoSize = true;
+			this.lblSynonymTargetDatabase.Font = new System.Drawing.Font("Segoe UI", 9F);
+			this.lblSynonymTargetDatabase.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(66)))), ((int)(((byte)(66)))));
+			this.lblSynonymTargetDatabase.Location = new System.Drawing.Point(10, 15);
+			this.lblSynonymTargetDatabase.Name = "lblSynonymTargetDatabase";
+			this.lblSynonymTargetDatabase.Size = new System.Drawing.Size(120, 20);
+			this.lblSynonymTargetDatabase.TabIndex = 0;
+			this.lblSynonymTargetDatabase.Text = "Target Database:";
 			// 
-			// chkShowSynonymTargets
+			// txtSynonymTargetDatabase
 			// 
-			this.chkShowSynonymTargets.AutoSize = true;
-			this.chkShowSynonymTargets.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.chkShowSynonymTargets.Location = new System.Drawing.Point(10, 35);
-			this.chkShowSynonymTargets.Name = "chkShowSynonymTargets";
-			this.chkShowSynonymTargets.Size = new System.Drawing.Size(488, 24);
-			this.chkShowSynonymTargets.TabIndex = 1;
-			this.chkShowSynonymTargets.Text = "📋 Configure target databases (auto-selects HiveCFMApp databases)";
-			this.chkShowSynonymTargets.UseVisualStyleBackColor = true;
-			this.chkShowSynonymTargets.CheckedChanged += new System.EventHandler(this.ChkShowSynonymTargets_CheckedChanged);
+			this.txtSynonymTargetDatabase.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.txtSynonymTargetDatabase.Font = new System.Drawing.Font("Segoe UI", 9F);
+			this.txtSynonymTargetDatabase.Location = new System.Drawing.Point(135, 12);
+			this.txtSynonymTargetDatabase.Name = "txtSynonymTargetDatabase";
+			this.txtSynonymTargetDatabase.Size = new System.Drawing.Size(300, 27);
+			this.txtSynonymTargetDatabase.TabIndex = 1;
+			this.txtSynonymTargetDatabase.Text = "Enter target database name (e.g., HiveCFMAppDB)";
+			this.txtSynonymTargetDatabase.TextChanged += new System.EventHandler(this.txtSynonymTargetDatabase_TextChanged);
 			// 
-			// lblSynonymTargets
+			// btnAutoDetectTarget
 			// 
-			this.lblSynonymTargets.AutoSize = true;
-			this.lblSynonymTargets.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-			this.lblSynonymTargets.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
-			this.lblSynonymTargets.Location = new System.Drawing.Point(10, 65);
-			this.lblSynonymTargets.Name = "lblSynonymTargets";
-			this.lblSynonymTargets.Size = new System.Drawing.Size(440, 20);
-			this.lblSynonymTargets.TabIndex = 2;
-			this.lblSynonymTargets.Text = "🎯 Select target databases (where synonyms will be created):";
-			this.lblSynonymTargets.Visible = false;
+			this.btnAutoDetectTarget.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(125)))), ((int)(((byte)(50)))));
+			this.btnAutoDetectTarget.FlatAppearance.BorderSize = 0;
+			this.btnAutoDetectTarget.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnAutoDetectTarget.Font = new System.Drawing.Font("Segoe UI", 8F);
+			this.btnAutoDetectTarget.ForeColor = System.Drawing.Color.White;
+			this.btnAutoDetectTarget.Location = new System.Drawing.Point(445, 12);
+			this.btnAutoDetectTarget.Name = "btnAutoDetectTarget";
+			this.btnAutoDetectTarget.Size = new System.Drawing.Size(70, 27);
+			this.btnAutoDetectTarget.TabIndex = 2;
+			this.btnAutoDetectTarget.Text = "🔍 Auto";
+			this.btnAutoDetectTarget.UseVisualStyleBackColor = false;
+			this.btnAutoDetectTarget.Click += new System.EventHandler(this.btnAutoDetectTarget_Click);
 			// 
-			// clbSynonymTargets
+			// lblSynonymInfo
 			// 
-			this.clbSynonymTargets.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			this.clbSynonymTargets.CheckOnClick = true;
-			this.clbSynonymTargets.FormattingEnabled = true;
-			this.clbSynonymTargets.Location = new System.Drawing.Point(10, 90);
-			this.clbSynonymTargets.Name = "clbSynonymTargets";
-			this.clbSynonymTargets.Size = new System.Drawing.Size(420, 56);
-			this.clbSynonymTargets.TabIndex = 3;
-			this.clbSynonymTargets.Visible = false;
-			// 
-			// btnAutoDetectTargets
-			// 
-			this.btnAutoDetectTargets.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(125)))), ((int)(((byte)(50)))));
-			this.btnAutoDetectTargets.FlatAppearance.BorderSize = 0;
-			this.btnAutoDetectTargets.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.btnAutoDetectTargets.Font = new System.Drawing.Font("Segoe UI", 8F);
-			this.btnAutoDetectTargets.ForeColor = System.Drawing.Color.White;
-			this.btnAutoDetectTargets.Location = new System.Drawing.Point(440, 90);
-			this.btnAutoDetectTargets.Name = "btnAutoDetectTargets";
-			this.btnAutoDetectTargets.Size = new System.Drawing.Size(80, 30);
-			this.btnAutoDetectTargets.TabIndex = 4;
-			this.btnAutoDetectTargets.Text = "🔄 Auto";
-			this.btnAutoDetectTargets.UseVisualStyleBackColor = false;
-			this.btnAutoDetectTargets.Visible = false;
-			this.btnAutoDetectTargets.Click += new System.EventHandler(this.BtnAutoDetectTargets_Click);
-			// 
-			// lblSynonymSourceDb
-			// 
-			this.lblSynonymSourceDb.AutoSize = true;
-			this.lblSynonymSourceDb.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.lblSynonymSourceDb.Location = new System.Drawing.Point(25, 55);
-			this.lblSynonymSourceDb.Name = "lblSynonymSourceDb";
-			this.lblSynonymSourceDb.Size = new System.Drawing.Size(121, 20);
-			this.lblSynonymSourceDb.TabIndex = 2;
-			this.lblSynonymSourceDb.Text = "Source Database";
-			this.lblSynonymSourceDb.Visible = false;
-			// 
-			// txtSynonymSourceDb
-			// 
-			this.txtSynonymSourceDb.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			this.txtSynonymSourceDb.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.txtSynonymSourceDb.Location = new System.Drawing.Point(200, 52);
-			this.txtSynonymSourceDb.Name = "txtSynonymSourceDb";
-			this.txtSynonymSourceDb.Size = new System.Drawing.Size(200, 27);
-			this.txtSynonymSourceDb.TabIndex = 3;
-			this.txtSynonymSourceDb.Visible = false;
+			this.lblSynonymInfo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(227)))), ((int)(((byte)(242)))), ((int)(((byte)(253)))));
+			this.lblSynonymInfo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.lblSynonymInfo.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Italic);
+			this.lblSynonymInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
+			this.lblSynonymInfo.Location = new System.Drawing.Point(10, 50);
+			this.lblSynonymInfo.Name = "lblSynonymInfo";
+			this.lblSynonymInfo.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
+			this.lblSynonymInfo.Size = new System.Drawing.Size(505, 40);
+			this.lblSynonymInfo.TabIndex = 3;
+			this.lblSynonymInfo.Text = "💡 Synonyms will be created in the target database pointing to HiveCFMSurveyDB ta" +
+    "bles";
+			this.lblSynonymInfo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// grpSQLAgentJobs
 			// 
@@ -711,7 +683,7 @@ namespace DacpacPublisher
 			this.pnlJobConfig.Controls.Add(this.pnlJobValidation);
 			this.pnlJobConfig.Location = new System.Drawing.Point(20, 65);
 			this.pnlJobConfig.Name = "pnlJobConfig";
-			this.pnlJobConfig.Size = new System.Drawing.Size(530, 200);
+			this.pnlJobConfig.Size = new System.Drawing.Size(530, 166);
 			this.pnlJobConfig.TabIndex = 1;
 			this.pnlJobConfig.Visible = false;
 			// 
@@ -719,7 +691,7 @@ namespace DacpacPublisher
 			// 
 			this.lblJobOwnerLoginName.AutoSize = true;
 			this.lblJobOwnerLoginName.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.lblJobOwnerLoginName.Location = new System.Drawing.Point(10, 15);
+			this.lblJobOwnerLoginName.Location = new System.Drawing.Point(3, 0);
 			this.lblJobOwnerLoginName.Name = "lblJobOwnerLoginName";
 			this.lblJobOwnerLoginName.Size = new System.Drawing.Size(120, 20);
 			this.lblJobOwnerLoginName.TabIndex = 0;
@@ -729,16 +701,16 @@ namespace DacpacPublisher
 			// 
 			this.txtJobOwnerLoginName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.txtJobOwnerLoginName.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.txtJobOwnerLoginName.Location = new System.Drawing.Point(120, 12);
+			this.txtJobOwnerLoginName.Location = new System.Drawing.Point(129, 3);
 			this.txtJobOwnerLoginName.Name = "txtJobOwnerLoginName";
-			this.txtJobOwnerLoginName.Size = new System.Drawing.Size(200, 27);
+			this.txtJobOwnerLoginName.Size = new System.Drawing.Size(185, 27);
 			this.txtJobOwnerLoginName.TabIndex = 1;
 			// 
 			// lblJobScriptsFolder
 			// 
 			this.lblJobScriptsFolder.AutoSize = true;
 			this.lblJobScriptsFolder.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.lblJobScriptsFolder.Location = new System.Drawing.Point(10, 50);
+			this.lblJobScriptsFolder.Location = new System.Drawing.Point(6, 33);
 			this.lblJobScriptsFolder.Name = "lblJobScriptsFolder";
 			this.lblJobScriptsFolder.Size = new System.Drawing.Size(126, 20);
 			this.lblJobScriptsFolder.TabIndex = 2;
@@ -748,7 +720,7 @@ namespace DacpacPublisher
 			// 
 			this.txtJobScriptsFolder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.txtJobScriptsFolder.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.txtJobScriptsFolder.Location = new System.Drawing.Point(10, 70);
+			this.txtJobScriptsFolder.Location = new System.Drawing.Point(129, 33);
 			this.txtJobScriptsFolder.Name = "txtJobScriptsFolder";
 			this.txtJobScriptsFolder.Size = new System.Drawing.Size(380, 27);
 			this.txtJobScriptsFolder.TabIndex = 3;
@@ -761,7 +733,7 @@ namespace DacpacPublisher
 			this.btnBrowseJobScripts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 			this.btnBrowseJobScripts.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.btnBrowseJobScripts.ForeColor = System.Drawing.Color.White;
-			this.btnBrowseJobScripts.Location = new System.Drawing.Point(400, 67);
+			this.btnBrowseJobScripts.Location = new System.Drawing.Point(389, 7);
 			this.btnBrowseJobScripts.Name = "btnBrowseJobScripts";
 			this.btnBrowseJobScripts.Size = new System.Drawing.Size(120, 28);
 			this.btnBrowseJobScripts.TabIndex = 4;
@@ -775,9 +747,9 @@ namespace DacpacPublisher
 			this.pnlJobValidation.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.pnlJobValidation.Controls.Add(this.lblJobValidationResults);
 			this.pnlJobValidation.Controls.Add(this.lstJobScripts);
-			this.pnlJobValidation.Location = new System.Drawing.Point(10, 110);
+			this.pnlJobValidation.Location = new System.Drawing.Point(10, 76);
 			this.pnlJobValidation.Name = "pnlJobValidation";
-			this.pnlJobValidation.Size = new System.Drawing.Size(510, 80);
+			this.pnlJobValidation.Size = new System.Drawing.Size(510, 84);
 			this.pnlJobValidation.TabIndex = 5;
 			this.pnlJobValidation.Visible = false;
 			// 
@@ -797,7 +769,7 @@ namespace DacpacPublisher
 			this.lstJobScripts.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.lstJobScripts.Font = new System.Drawing.Font("Segoe UI", 8F);
 			this.lstJobScripts.HideSelection = false;
-			this.lstJobScripts.Location = new System.Drawing.Point(5, 30);
+			this.lstJobScripts.Location = new System.Drawing.Point(3, 25);
 			this.lstJobScripts.Name = "lstJobScripts";
 			this.lstJobScripts.Size = new System.Drawing.Size(495, 45);
 			this.lstJobScripts.TabIndex = 1;
@@ -810,10 +782,10 @@ namespace DacpacPublisher
 			this.lblJobDescriptions.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.lblJobDescriptions.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.lblJobDescriptions.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(97)))), ((int)(((byte)(97)))), ((int)(((byte)(97)))));
-			this.lblJobDescriptions.Location = new System.Drawing.Point(25, 250);
+			this.lblJobDescriptions.Location = new System.Drawing.Point(25, 234);
 			this.lblJobDescriptions.Name = "lblJobDescriptions";
 			this.lblJobDescriptions.Padding = new System.Windows.Forms.Padding(10, 5, 10, 5);
-			this.lblJobDescriptions.Size = new System.Drawing.Size(520, 25);
+			this.lblJobDescriptions.Size = new System.Drawing.Size(520, 43);
 			this.lblJobDescriptions.TabIndex = 2;
 			this.lblJobDescriptions.Text = "💡 Select a job scripts folder to see available jobs...";
 			this.lblJobDescriptions.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -856,7 +828,7 @@ namespace DacpacPublisher
 			this.btnConfigureSmartProcedures.ForeColor = System.Drawing.Color.White;
 			this.btnConfigureSmartProcedures.Location = new System.Drawing.Point(300, 32);
 			this.btnConfigureSmartProcedures.Name = "btnConfigureSmartProcedures";
-			this.btnConfigureSmartProcedures.Size = new System.Drawing.Size(220, 45);
+			this.btnConfigureSmartProcedures.Size = new System.Drawing.Size(220, 35);
 			this.btnConfigureSmartProcedures.TabIndex = 1;
 			this.btnConfigureSmartProcedures.Text = "⚙️ Configure Smart Procedures";
 			this.btnConfigureSmartProcedures.UseVisualStyleBackColor = false;

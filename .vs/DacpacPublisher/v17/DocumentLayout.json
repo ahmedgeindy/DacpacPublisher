@@ -3,16 +3,40 @@
   "WorkspaceRootPath": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|c:\\users\\ahmed genidy\\source\\repos\\dacpacpublisher\\dacpacpublisher\\dacpacpublisherform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\dacpacpublisherform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\dacpacpublisher\\services\\deploymentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\services\\deploymentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|c:\\users\\ahmed genidy\\source\\repos\\dacpacpublisher\\dacpacpublisher\\services\\backupservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\services\\backupservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|c:\\users\\ahmed genidy\\source\\repos\\dacpacpublisher\\dacpacpublisher\\services\\configurationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\services\\configurationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|c:\\users\\ahmed genidy\\source\\repos\\dacpacpublisher\\dacpacpublisher\\services\\connectionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\services\\connectionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|c:\\users\\ahmed genidy\\source\\repos\\dacpacpublisher\\dacpacpublisher\\smartproceduredialog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\smartproceduredialog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\dacpacpublisher\\smartproceduredialog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\smartproceduredialog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\dacpacpublisher\\smartproceduredialog.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\smartproceduredialog.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\dacpacpublisher\\dacpacpublisherform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\dacpacpublisherform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\dacpacpublisher\\dacpacpublisherform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\dacpacpublisherform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\dacpacpublisher\\dacpacpublisherform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{41A76606-168F-47A2-AA6D-B655B8764BAE}|DacpacPublisher\\DacpacPublisher.csproj|solutionrelative:dacpacpublisher\\dacpacpublisherform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,7 +46,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 7,
           "Children": [
             {
               "$type": "Bookmark",
@@ -39,39 +63,113 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "DacpacPublisherForm.cs",
-              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.cs",
-              "RelativeDocumentMoniker": "DacpacPublisher\\DacpacPublisherForm.cs",
-              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.cs",
-              "RelativeToolTip": "DacpacPublisher\\DacpacPublisherForm.cs",
-              "ViewState": "AgIAAD8AAAAAAAAAAAAYwFEAAAAAAAAAAAAAAA==",
+              "Title": "BackupService.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\BackupService.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\Services\\BackupService.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\BackupService.cs",
+              "RelativeToolTip": "DacpacPublisher\\Services\\BackupService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-05T02:08:18.543Z",
+              "WhenOpened": "2025-06-17T08:58:54.968Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ConnectionService.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\ConnectionService.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\Services\\ConnectionService.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\ConnectionService.cs",
+              "RelativeToolTip": "DacpacPublisher\\Services\\ConnectionService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-17T08:58:42.413Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ConfigurationService.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\ConfigurationService.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\Services\\ConfigurationService.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\ConfigurationService.cs",
+              "RelativeToolTip": "DacpacPublisher\\Services\\ConfigurationService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-17T08:58:34.407Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "SmartProcedureDialog.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\SmartProcedureDialog.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\SmartProcedureDialog.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\SmartProcedureDialog.cs",
+              "RelativeToolTip": "DacpacPublisher\\SmartProcedureDialog.cs",
+              "ViewState": "AgIAAIYAAAAAAAAAAAAowI4AAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-16T10:16:45.29Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "DeploymentService.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\DeploymentService.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\Services\\DeploymentService.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\Services\\DeploymentService.cs",
+              "RelativeToolTip": "DacpacPublisher\\Services\\DeploymentService.cs",
+              "ViewState": "AgIAACAEAAAAAAAAAAAAACAEAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T09:06:43.352Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "SmartProcedureDialog.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\SmartProcedureDialog.Designer.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\SmartProcedureDialog.Designer.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\SmartProcedureDialog.Designer.cs",
+              "RelativeToolTip": "DacpacPublisher\\SmartProcedureDialog.Designer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-16T10:16:41.718Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "SmartProcedureDialog.cs [Design]",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\SmartProcedureDialog.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\SmartProcedureDialog.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\SmartProcedureDialog.cs [Design]",
+              "RelativeToolTip": "DacpacPublisher\\SmartProcedureDialog.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-16T10:16:39.18Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "DacpacPublisherForm.cs",
+              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.cs",
+              "RelativeDocumentMoniker": "DacpacPublisher\\DacpacPublisherForm.cs",
+              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.cs",
+              "RelativeToolTip": "DacpacPublisher\\DacpacPublisherForm.cs",
+              "ViewState": "AgIAAPUBAAAAAAAAAAAswGUCAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T09:51:10.762Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
               "Title": "DacpacPublisherForm.cs [Design]",
               "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.cs",
               "RelativeDocumentMoniker": "DacpacPublisher\\DacpacPublisherForm.cs",
               "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.cs [Design]",
               "RelativeToolTip": "DacpacPublisher\\DacpacPublisherForm.cs [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-05T02:06:10.844Z",
-              "EditorCaption": " [Design]"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "DacpacPublisherForm.Designer.cs",
-              "DocumentMoniker": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.Designer.cs",
-              "RelativeDocumentMoniker": "DacpacPublisher\\DacpacPublisherForm.Designer.cs",
-              "ToolTip": "C:\\Users\\Ahmed Genidy\\source\\repos\\DacpacPublisher\\DacpacPublisher\\DacpacPublisherForm.Designer.cs",
-              "RelativeToolTip": "DacpacPublisher\\DacpacPublisherForm.Designer.cs",
-              "ViewState": "AgIAAJADAAAAAAAAAAAmwK4DAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-05T02:05:57.124Z"
+              "WhenOpened": "2025-06-15T09:50:50.869Z"
             }
           ]
         }

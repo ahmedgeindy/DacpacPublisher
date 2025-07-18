@@ -70,14 +70,11 @@
       <DependentUpon>DacpacPublisherForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Data Models\Models.cs" />
-    <Compile Include="Form1.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Helper\ConfigurationController.cs" />
+    <Compile Include="Helper\DatabaseController.cs" />
+    <Compile Include="Helper\DeploymentController.cs" />
     <Compile Include="Helper\SynonymConfiguration.cs" />
-    <Compile Include="Helper\UIHelper.cs" />
+    <Compile Include="Helper\ValidationController.cs" />
     <Compile Include="InputDialog .cs">
       <SubType>Form</SubType>
     </Compile>
@@ -95,7 +92,6 @@
     <Compile Include="Services\DeploymentService.cs" />
     <Compile Include="Services\EnhancedSynonymService .cs" />
     <Compile Include="Services\LogService.cs" />
-    <Compile Include="Services\ProcedureValidator.cs" />
     <Compile Include="SmartProcedureDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -104,9 +100,6 @@
     </Compile>
     <EmbeddedResource Include="DacpacPublisherForm.resx">
       <DependentUpon>DacpacPublisherForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

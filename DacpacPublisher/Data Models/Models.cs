@@ -22,6 +22,8 @@ namespace DacpacPublisher.Data_Models
 		public string Username { get; set; } = string.Empty;
 		public string Password { get; set; } = string.Empty;
 		public string Database { get; set; } = string.Empty;
+		public string SynonymTargetDatabase { get; set; } = string.Empty;
+
 
 		// DACPAC Settings
 		public string DacpacPath { get; set; } = string.Empty;
@@ -166,6 +168,53 @@ namespace DacpacPublisher.Data_Models
 				DeploymentTargets = DeploymentTargets.Select(dt => dt.Clone()).ToList(),
 				History = new List<DeploymentHistory>(History)
 			};
+		}
+
+		public string SynonymCheckboxText
+		{
+			get
+			{
+				if (!CreateSynonyms) return "✅ Create Synonyms";
+
+				if (string.IsNullOrEmpty(SynonymTargetDatabase))
+					return "✅ Create Synonyms (Auto-detect target)";
+
+				return $"✅ Create Synonyms in: {SynonymTargetDatabase}";
+			}
+		}
+
+		// Helper to detect target database
+		public string GetAutoDetectedTargetDatabase()
+		{
+			var allDbs = GetAllDeploymentDatabases();
+
+			// Look for HiveCFMApp databases first
+			var appDb = allDbs.FirstOrDefault(db =>
+				db.IndexOf("HiveCFMApp", StringComparison.OrdinalIgnoreCase) >= 0);
+
+			if (!string.IsNullOrEmpty(appDb))
+				return appDb;
+
+			// Fallback to primary database if no HiveCFMApp found
+			return Database ?? string.Empty;
+		}
+
+		private List<string> GetAllDeploymentDatabases()
+		{
+			var databases = new List<string>();
+
+			if (!string.IsNullOrEmpty(Database))
+				databases.Add(Database);
+
+			if (EnableMultipleDatabases && DeploymentTargets?.Any() == true)
+			{
+				databases.AddRange(DeploymentTargets
+					.Where(t => t.IsEnabled && !string.IsNullOrEmpty(t.Database))
+					.Select(t => t.Database)
+					.Where(db => !databases.Contains(db)));
+			}
+
+			return databases;
 		}
 	}
 

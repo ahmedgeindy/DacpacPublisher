@@ -27,6 +27,7 @@ namespace DacpacPublisher.Helper
 
 			return $"Manual: {SourceDatabase} → {TargetDatabases?.Count ?? 0} target(s)";
 		}
+
 	}
 
 	/// <summary>
@@ -36,4 +37,5 @@ namespace DacpacPublisher.Helper
 	{
 		public SynonymConfiguration Configuration { get; set; }
 	}
+
 }

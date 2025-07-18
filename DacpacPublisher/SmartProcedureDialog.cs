@@ -64,7 +64,8 @@ namespace DacpacPublisher
 				Text = "🗄️ Secondary Database: Secondary",
 				Location = new Point(400, 50),
 				Size = new Size(300, 20),
-				Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+				Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+				Visible = false
 			};
 
 			// Procedure list
@@ -83,13 +84,14 @@ namespace DacpacPublisher
 				View = View.Details,
 				FullRowSelect = true,
 				GridLines = true,
-				MultiSelect = false
+				MultiSelect = false,
+				Visible = true
 			};
 
 			_procedureListView.Columns.Add("Procedure Name", 200);
 			_procedureListView.Columns.Add("Primary DB", 80);
-			_procedureListView.Columns.Add("Secondary DB", 100);
-			_procedureListView.Columns.Add("Category", 120);
+			//_procedureListView.Columns.Add("Secondary DB", 100);
+			//_procedureListView.Columns.Add("Category", 120);
 
 			// Add procedure section
 			var lblAdd = new Label
@@ -137,14 +139,16 @@ namespace DacpacPublisher
 			{
 				Text = "Category:",
 				Location = new Point(540, 195),
-				Size = new Size(80, 20)
+				Size = new Size(80, 20),
+				Visible = false
 			};
 
 			_cmbCategory = new ComboBox
 			{
 				Location = new Point(540, 220),
 				Size = new Size(150, 23),
-				DropDownStyle = ComboBoxStyle.DropDownList
+				DropDownStyle = ComboBoxStyle.DropDownList,
+				Visible = false
 			};
 			_cmbCategory.Items.AddRange(new[] { "Setup", "DataProcessing", "Maintenance", "Reporting", "General" });
 			_cmbCategory.SelectedIndex = 4;
@@ -171,7 +175,8 @@ namespace DacpacPublisher
 				Text = "✅ Secondary Database",
 				Location = new Point(540, 305),
 				Size = new Size(200, 20),
-				ForeColor = Color.Blue
+				ForeColor = Color.Blue,
+				Visible = false
 			};
 
 			_btnAddProcedure = new Button
